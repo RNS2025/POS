@@ -1,0 +1,235 @@
+import bcrypt from 'bcryptjs';
+import { z } from 'zod';
+import { AppError } from '../infra/app-error.js';
+import { signToken } from '../infra/jwt.js';
+import type { ITenantInviteRepository } from '../repositories/tenant-invite.repository.js';
+import { tenantInviteRepository } from '../repositories/tenant-invite.repository.js';
+import type { ITenantRepository } from '../repositories/tenant.repository.js';
+import { tenantRepository } from '../repositories/tenant.repository.js';
+import type { IUserRepository } from '../repositories/user.repository.js';
+import { userRepository } from '../repositories/user.repository.js';
+import { assertSlugAllowed, slugSchema } from '../validation/tenant-slug.js';
+
+const registerSchema = z.object({
+  shopName: z.string().min(1, 'Enter your shop name').max(200, 'Shop name is too long'),
+  slug: slugSchema,
+  email: z.string().email('Enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password is too long'),
+});
+
+const loginSchema = z.object({
+  email: z.string().email('Enter a valid email address'),
+  password: z.string().min(1, 'Enter your password'),
+  tenantSlug: slugSchema.optional(),
+});
+
+const acceptInviteSchema = z.object({
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password is too long'),
+});
+
+export interface IAuthService {
+  register(input: unknown): Promise<{ token: string; user: AuthUserDto }>;
+  login(input: unknown): Promise<{ token: string; user: AuthUserDto }>;
+  getInvite(token: string): Promise<InvitePreviewDto>;
+  acceptInvite(token: string, input: unknown): Promise<{ token: string; user: AuthUserDto }>;
+}
+
+export interface AuthUserDto {
+  id: string;
+  email: string;
+  role: string;
+  tenantId: string | null;
+  tenantSlug: string | null;
+}
+
+export interface InvitePreviewDto {
+  shopName: string;
+  slug: string;
+  email: string;
+  expiresAt: string;
+  expired: boolean;
+  used: boolean;
+}
+
+export class AuthService implements IAuthService {
+  constructor(
+    private readonly tenants: ITenantRepository = tenantRepository,
+    private readonly users: IUserRepository = userRepository,
+    private readonly invites: ITenantInviteRepository = tenantInviteRepository,
+  ) {}
+
+  async register(input: unknown) {
+    const data = registerSchema.parse(input);
+
+    try {
+      assertSlugAllowed(data.slug);
+    } catch (err) {
+      throw new AppError(err instanceof Error ? err.message : 'Invalid shop web address.', 409);
+    }
+
+    if (await this.tenants.slugExists(data.slug)) {
+      throw new AppError(
+        `The shop address "${data.slug}" is already taken. Choose another web address, or log in if this is already your shop.`,
+        409,
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(data.password, 12);
+    const tenant = await this.tenants.create({ name: data.shopName, slug: data.slug });
+    const user = await this.users.create({
+      email: data.email.toLowerCase(),
+      passwordHash,
+      role: 'admin',
+      tenantId: tenant.id,
+    });
+
+    const token = signToken({
+      sub: user.id,
+      role: user.role,
+      tenantId: tenant.id,
+      tenantSlug: tenant.slug,
+    });
+
+    return {
+      token,
+      user: this.toUserDto(user, tenant.slug),
+    };
+  }
+
+  async login(input: unknown) {
+    const data = loginSchema.parse(input);
+
+    if (data.tenantSlug) {
+      const tenant = await this.tenants.findBySlug(data.tenantSlug);
+      if (!tenant) {
+        throw new AppError(
+          `We couldn't find a shop at "${data.tenantSlug}". Check the shop web address — it is the part after payment.rns-apps.dk/ (e.g. acme-bakery).`,
+          401,
+        );
+      }
+
+      const user = await this.users.findByEmailAndTenant(data.email.toLowerCase(), tenant.id);
+      if (!user || user.role !== 'admin') {
+        throw new AppError(
+          `No admin account with email ${data.email} for shop "${data.tenantSlug}". Check the email or create a shop first.`,
+          401,
+        );
+      }
+
+      const valid = await bcrypt.compare(data.password, user.passwordHash);
+      if (!valid) {
+        throw new AppError('Wrong password for that email and shop. Try again.', 401);
+      }
+
+      const token = signToken({
+        sub: user.id,
+        role: user.role,
+        tenantId: tenant.id,
+        tenantSlug: tenant.slug,
+      });
+
+      return { token, user: this.toUserDto(user, tenant.slug) };
+    }
+
+    const user = await this.users.findPlatformAdminByEmail(data.email.toLowerCase());
+    if (!user) {
+      throw new AppError(
+        'No RNS platform admin account with that email. Merchant log in requires a shop web address.',
+        401,
+      );
+    }
+
+    const valid = await bcrypt.compare(data.password, user.passwordHash);
+    if (!valid) {
+      throw new AppError('Wrong password for that email.', 401);
+    }
+
+    const token = signToken({
+      sub: user.id,
+      role: user.role,
+      tenantId: null,
+      tenantSlug: null,
+    });
+
+    return { token, user: this.toUserDto(user, null) };
+  }
+
+  async getInvite(token: string) {
+    const invite = await this.invites.findByToken(token);
+    if (!invite) {
+      throw new AppError('This invite link is invalid. Ask RNS support for a new link.', 404);
+    }
+
+    const expired = invite.expiresAt.getTime() < Date.now();
+    const used = invite.usedAt !== null;
+
+    return {
+      shopName: invite.tenant.name,
+      slug: invite.tenant.slug,
+      email: invite.email,
+      expiresAt: invite.expiresAt.toISOString(),
+      expired,
+      used,
+    };
+  }
+
+  async acceptInvite(token: string, input: unknown) {
+    const data = acceptInviteSchema.parse(input);
+    const invite = await this.invites.findByToken(token);
+
+    if (!invite) {
+      throw new AppError('This invite link is invalid. Ask RNS support for a new link.', 404);
+    }
+    if (invite.usedAt) {
+      throw new AppError('This invite has already been used. Log in with your shop web address instead.', 409);
+    }
+    if (invite.expiresAt.getTime() < Date.now()) {
+      throw new AppError('This invite has expired. Ask RNS support for a new link.', 410);
+    }
+
+    const existing = await this.users.findByEmailAndTenant(invite.email, invite.tenantId);
+    if (existing) {
+      throw new AppError(
+        'An account already exists for this shop. Log in with your shop web address instead.',
+        409,
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(data.password, 12);
+    const user = await this.users.create({
+      email: invite.email,
+      passwordHash,
+      role: 'admin',
+      tenantId: invite.tenantId,
+    });
+
+    await this.invites.markUsed(invite.id);
+
+    const authToken = signToken({
+      sub: user.id,
+      role: user.role,
+      tenantId: invite.tenantId,
+      tenantSlug: invite.tenant.slug,
+    });
+
+    return {
+      token: authToken,
+      user: this.toUserDto(user, invite.tenant.slug),
+    };
+  }
+
+  private toUserDto(
+    user: { id: string; email: string; role: string; tenantId: string | null },
+    tenantSlug: string | null,
+  ): AuthUserDto {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      tenantId: user.tenantId,
+      tenantSlug,
+    };
+  }
+}
+
+export const authService = new AuthService();

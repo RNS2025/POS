@@ -1,0 +1,176 @@
+@import 'tailwindcss';
+
+@source './app/**/*.{html,ts}';
+
+@theme {
+  --color-surface: #030712;
+  --color-surface-raised: #0b1220;
+  --color-surface-glass: rgb(15 23 42 / 0.55);
+  --color-ink: #f8fafc;
+  --color-ink-muted: #94a3b8;
+  --color-accent: #4285f4;
+  --color-accent-violet: #a78bfa;
+  --color-accent-cyan: #22d3ee;
+  --color-accent-emerald: #34d399;
+  --font-display: 'Segoe UI', system-ui, sans-serif;
+}
+
+@keyframes landing-orbit {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+@keyframes landing-orbit-reverse {
+  from {
+    transform: rotateX(65deg) rotateZ(0deg);
+  }
+  to {
+    transform: rotateX(65deg) rotateZ(360deg);
+  }
+}
+
+@keyframes landing-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes landing-aurora {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(4%, -6%) scale(1.08);
+  }
+  66% {
+    transform: translate(-5%, 4%) scale(0.94);
+  }
+}
+
+@keyframes landing-pulse-ring {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes landing-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-orbit,
+  .landing-orbit-ring,
+  .landing-float,
+  .landing-aurora-blob,
+  .landing-pulse-ring {
+    animation: none !important;
+  }
+
+  .landing-parallax {
+    transform: none !important;
+  }
+}
+
+.landing-page {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.landing-grid-bg {
+  background-image:
+    linear-gradient(rgb(148 163 184 / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(148 163 184 / 0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent);
+}
+
+.landing-aurora-blob {
+  animation: landing-aurora 18s ease-in-out infinite;
+  filter: blur(80px);
+}
+
+.landing-aurora-blob-delay {
+  animation-delay: -9s;
+}
+
+.landing-glass {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgb(148 163 184 / 0.12);
+}
+
+.landing-glass-strong {
+  background: rgb(15 23 42 / 0.72);
+  backdrop-filter: blur(28px);
+  border: 1px solid rgb(148 163 184 / 0.16);
+}
+
+.landing-shimmer-btn {
+  background-size: 200% auto;
+  animation: landing-shimmer 4s linear infinite;
+}
+
+.landing-orbit {
+  animation: landing-orbit 28s linear infinite;
+  transform-style: preserve-3d;
+}
+
+.landing-orbit-ring {
+  animation: landing-orbit-reverse 20s linear infinite;
+  transform-style: preserve-3d;
+}
+
+.landing-float {
+  animation: landing-float 5s ease-in-out infinite;
+}
+
+.landing-float-delay {
+  animation-delay: -2.5s;
+}
+
+.landing-scene {
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx, 12deg)) rotateY(var(--ry, -18deg));
+}
+
+.landing-device {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.landing-hub-glow {
+  box-shadow:
+    0 0 60px rgb(66 133 244 / 0.35),
+    0 0 120px rgb(167 139 250 / 0.15),
+    inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+
+.landing-pulse-ring {
+  animation: landing-pulse-ring 3s ease-in-out infinite;
+}
+
+html,
+body {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+}

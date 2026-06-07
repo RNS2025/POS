@@ -1,0 +1,155 @@
+<p><a routerLink="/platform/merchants">← All merchants</a></p>
+
+<h1>Merchant</h1>
+
+<app-logout-link />
+
+@if (loading() && !merchant()) {
+  <p>Loading…</p>
+} @else if (merchant(); as m) {
+  <section>
+    <h2>{{ m.name }}</h2>
+    <p>Status: {{ statusLabel(m.status) }}</p>
+    <p>Shop link: payment.rns-apps.dk/{{ m.slug }}</p>
+    <p>
+      Merchant setup:
+      <a [routerLink]="['/', m.slug, 'admin', 'setup']">payment.rns-apps.dk/{{ m.slug }}/admin/setup</a>
+    </p>
+    <p>Registered: {{ m.createdAt | date: 'medium' }}</p>
+    <p>Orders: {{ m.orderCount }}@if (m.lastOrderAt) { — last order {{ m.lastOrderAt | date: 'medium' }}}</p>
+  </section>
+
+  <section>
+    <h2>Recent orders</h2>
+    @if (orders().length === 0) {
+      <p>No orders yet.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Ref</th>
+            <th>Channel</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (o of orders(); track o.id) {
+            <tr>
+              <td>{{ o.quickpayOrderRef }}</td>
+              <td>{{ o.channel === 'terminal' ? 'In-store' : 'Online' }}</td>
+              <td>{{ o.amountOre / 100 | currency: o.currency }}</td>
+              <td>{{ o.status }}</td>
+              <td>{{ o.paymentStatus ?? '—' }}</td>
+              <td>{{ o.createdAt | date: 'medium' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  <section>
+    <h2>Quickpay</h2>
+    @if (m.quickpayMerchantId) {
+      <p>Merchant number: {{ m.quickpayMerchantId }}</p>
+    } @else {
+      <p>Not configured yet</p>
+    }
+    <p>
+      Connection:
+      @if (m.lastPingOk === true) {
+        OK
+      } @else if (m.lastPingOk === false) {
+        Problem — {{ m.lastPingError ?? 'test failed' }}
+      } @else {
+        Not tested yet
+      }
+    </p>
+    @if (m.lastPingAt) {
+      <p>Last tested: {{ m.lastPingAt | date: 'medium' }}</p>
+    }
+    @if (m.webhookUrl) {
+      <p>Webhook URL: {{ m.webhookUrl }}</p>
+    }
+    <p>
+      <button type="button" (click)="pingQuickpay()" [disabled]="pinging() || !m.quickpayMerchantId">
+        Test Quickpay connection
+      </button>
+    </p>
+  </section>
+
+  <section>
+    <h2>Clearhaus</h2>
+    <form (ngSubmit)="saveClearhaus()">
+      <p>
+        <label>
+          <input type="checkbox" name="clearhausConfirmed" [(ngModel)]="clearhausConfirmed" />
+          Merchant has completed Clearhaus setup
+        </label>
+      </p>
+      @if (m.clearhausConfirmedAt) {
+        <p>Confirmed: {{ m.clearhausConfirmedAt | date: 'medium' }}</p>
+      }
+      <p>
+        <button type="submit" [disabled]="savingClearhaus()">Save Clearhaus status</button>
+      </p>
+    </form>
+  </section>
+
+  <section>
+    <h2>Support notes</h2>
+    <form (ngSubmit)="addNote()">
+      <p>
+        <label>
+          New note
+          <textarea name="noteBody" [(ngModel)]="noteBody" rows="3"></textarea>
+        </label>
+      </p>
+      <p>
+        <button type="submit" [disabled]="savingNote() || !noteBody.trim()">Add note</button>
+      </p>
+    </form>
+
+    @if (m.notes.length === 0) {
+      <p>No notes yet.</p>
+    } @else {
+      <ul>
+        @for (note of m.notes; track note.id) {
+          <li>
+            <p>{{ note.body }}</p>
+            <p>{{ note.authorEmail }} — {{ note.createdAt | date: 'medium' }}</p>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section>
+    <h2>People</h2>
+    @if (m.pendingInvite) {
+      <p>
+        Pending invite for {{ m.pendingInvite.email }} — expires
+        {{ m.pendingInvite.expiresAt | date: 'mediumDate' }}
+      </p>
+      <p>Invite link: {{ m.pendingInvite.inviteUrl }}</p>
+    }
+    @if (m.users.length === 0) {
+      <p>No admin users found.</p>
+    } @else {
+      <ul>
+        @for (user of m.users; track user.id) {
+          <li>{{ user.email }} (since {{ user.createdAt | date: 'mediumDate' }})</li>
+        }
+      </ul>
+    }
+  </section>
+
+  @if (error()) {
+    <p>{{ error() }}</p>
+  }
+} @else if (error()) {
+  <p>{{ error() }}</p>
+}

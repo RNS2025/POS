@@ -1,0 +1,62 @@
+---
+description: Git worktree workflow — one worktree per feature, merge to master, then delete
+alwaysApply: true
+---
+
+# Git worktree workflow
+
+Every **new feature** gets its own **git worktree** and branch. Do not implement features on `master` directly.
+
+## Starting a feature
+
+1. Confirm the feature name and branch (e.g. `feature/merchant-settings`).
+2. Create a worktree from **`master`**:
+
+   ```bash
+   npm run worktree:new -- feature/<name>
+   ```
+
+3. Work **only** in `.worktrees/<branch-path>/` for that feature until merge.
+4. Run `npm run install:all` in the new worktree if dependencies are missing (the script runs this automatically).
+5. Follow `keep-code-simple.mdc` — vertical slice in the worktree branch.
+
+**Branch naming:** `feature/<short-kebab-name>` (e.g. `feature/auth`, `feature/shop-catalog`).
+
+## While working
+
+- Commit on the feature branch in the worktree — not on `master`.
+- Keep the main repo checkout on `master` unless merging.
+- List active worktrees: `npm run worktree:list`
+
+## When the user is happy — merge to master
+
+Only merge after the user confirms they are satisfied with the feature.
+
+1. Ensure the feature branch builds (Server + Client).
+2. Merge into **`master`** and remove the worktree:
+
+   ```bash
+   npm run worktree:merge -- feature/<name>
+   ```
+
+3. This merges the branch into `master`, removes `.worktrees/<name>/`, and deletes the feature branch.
+
+## After merge
+
+- Worktree is **deleted** — do not leave stale worktrees.
+- `master` contains the merged work; continue the next feature with a **new** worktree.
+
+## Do not
+
+- Start feature work on `master` without a worktree.
+- Leave merged feature worktrees around.
+- Force-push `master` unless the user explicitly asks.
+- Merge without user confirmation that they are happy with the feature.
+
+## If the user rejects the feature
+
+```bash
+npm run worktree:discard -- feature/<name>
+```
+
+Requires typing `discard` to confirm. Deletes the branch and worktree without merging.

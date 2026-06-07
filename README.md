@@ -33,11 +33,47 @@ This will:
 ## Project layout
 
 ```text
-Client/     Angular SPA (shop, kasse, admin, checkout)
-Server/     Express API (TypeScript)
-Shared/     Shared types (optional)
-scripts/    Dev orchestration
+Client/src/app/
+  core/           guards, interceptors, models, services
+  features/       shop, kasse, admin, checkout
+  layouts/        shop-layout, kasse-layout, admin-layout
+  shared/         reusable components
+
+Server/src/
+  controllers/
+  repositories/
+  services/
+  routes/
+  middleware/
+  infra/          db, config
+  prisma/         schema (Server/prisma/)
+
+Shared/types/     API types shared by client and server
+scripts/          Dev orchestration
+.worktrees/        Local git worktrees (ignored; one per feature)
 ```
+
+## Feature workflow (git worktree)
+
+Every new feature uses an isolated worktree — do not build features directly on `master`.
+
+```bash
+# 1. Create feature worktree + branch from master
+npm run worktree:new -- feature/my-feature
+
+# 2. Open .worktrees/feature-my-feature in your editor and implement there
+
+# 3. When happy — merge to master, remove worktree, delete branch
+npm run worktree:merge -- feature/my-feature
+
+# List active worktrees
+npm run worktree:list
+
+# Abandon without merging (type "discard" to confirm)
+npm run worktree:discard -- feature/my-feature
+```
+
+See `.cursor/rules/git-worktree-workflow.mdc` for AI agent behavior.
 
 ## Environment
 

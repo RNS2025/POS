@@ -10,6 +10,10 @@ Client/dist/
 
 # Server
 Server/dist/
+Server/src/generated/
 
 # IDE
 .idea/
+
+# Git worktrees (local feature checkouts — never commit)
+.worktrees/

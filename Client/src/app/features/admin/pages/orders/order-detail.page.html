@@ -1,0 +1,146 @@
+<p><a [routerLink]="['/', tenantSlug, 'admin', 'orders']">← All orders</a></p>
+
+<h1>Order</h1>
+
+<app-logout-link />
+
+@if (loading() && !order()) {
+  <p>Loading…</p>
+} @else if (order(); as o) {
+  <section>
+    <p><strong>Ref:</strong> {{ o.quickpayOrderRef }}</p>
+    <p><strong>Channel:</strong> {{ o.channel === 'terminal' ? 'In-store' : 'Online' }}</p>
+    <p><strong>Amount:</strong> {{ o.amountOre / 100 | currency: o.currency }}</p>
+    <p><strong>Status:</strong> {{ o.status }}</p>
+    <p><strong>Payment:</strong> {{ o.paymentStatus ?? '—' }}</p>
+    @if (o.refundedAmountOre > 0) {
+      <p><strong>Refunded:</strong> {{ o.refundedAmountOre / 100 | currency: o.currency }}</p>
+      <p><strong>Refundable remaining:</strong> {{ o.refundableAmountOre / 100 | currency: o.currency }}</p>
+    }
+    @if (o.customerEmail) {
+      <p><strong>Customer:</strong> {{ o.customerEmail }}</p>
+    }
+    @if (o.description) {
+      <p><strong>Note:</strong> {{ o.description }}</p>
+    }
+    <p><strong>Created:</strong> {{ o.createdAt | date: 'medium' }}</p>
+  </section>
+
+  @if (o.status === 'failed' || o.status === 'cancelled' || o.status === 'pending') {
+    <p>Payment did not complete — share the payment link below or refresh it.</p>
+  }
+
+  @if (showPaymentLink()) {
+    <section>
+      <h2>Payment link</h2>
+      <p>Send this link to the customer so they can pay online.</p>
+      <p><a [href]="displayPaymentUrl()" target="_blank" rel="noopener">Open payment page</a></p>
+      <p><code>{{ displayPaymentUrl() }}</code></p>
+      <p>
+        <button type="button" (click)="copyPaymentLink()">Copy link</button>
+      </p>
+    </section>
+  }
+
+  <section>
+    <h2>Actions</h2>
+    @if (canSyncStatus()) {
+      <p>
+        <button type="button" (click)="syncStatus()" [disabled]="actionLoading()">
+          Refresh status from Quickpay
+        </button>
+        <span> — Use when webhooks cannot reach your machine (local dev).</span>
+      </p>
+    }
+    @if (hasAction('retry')) {
+      <p>
+        <button type="button" (click)="retry()" [disabled]="actionLoading()">
+          {{ showPaymentLink() ? 'Refresh payment link' : 'Retry payment' }}
+        </button>
+        @if (o.actionHints.retry) {
+          <span> — {{ o.actionHints.retry }}</span>
+        }
+      </p>
+    }
+    @if (hasAction('refund')) {
+      @if (!showRefundForm) {
+        <p>
+          <button type="button" (click)="showRefundForm = true" [disabled]="actionLoading()">
+            Refund
+          </button>
+          @if (o.actionHints.refund) {
+            <span> — {{ o.actionHints.refund }}</span>
+          }
+        </p>
+      } @else {
+        <form (ngSubmit)="refund()">
+          <p>
+            <label>
+              Refund amount (DKK)
+              <input
+                type="number"
+                name="refundAmountDkk"
+                [(ngModel)]="refundAmountDkk"
+                [max]="o.refundableAmountOre / 100"
+                min="0.01"
+                step="0.01"
+                required
+              />
+            </label>
+          </p>
+          <p>
+            <button type="submit" [disabled]="actionLoading()">Confirm refund</button>
+            <button type="button" (click)="showRefundForm = false">Cancel</button>
+          </p>
+        </form>
+      }
+    }
+    @if (hasAction('void')) {
+      <p>
+        <button type="button" (click)="voidSale()" [disabled]="actionLoading()">Void sale</button>
+        @if (o.actionHints.void) {
+          <span> — {{ o.actionHints.void }}</span>
+        }
+      </p>
+    }
+    @if (hasAction('abort')) {
+      <p>
+        <button type="button" (click)="abortSale()" [disabled]="actionLoading()">Cancel on terminal</button>
+        @if (o.actionHints.abort) {
+          <span> — {{ o.actionHints.abort }}</span>
+        }
+      </p>
+    }
+    @if (o.allowedActions.length === 0) {
+      <p>No actions available for this order.</p>
+    }
+  </section>
+
+  @if (o.paymentActions.length > 0) {
+    <section>
+      <h2>Activity</h2>
+      <ul>
+        @for (a of o.paymentActions; track a.id) {
+          <li>
+            {{ a.action }} — {{ a.status }}
+            @if (a.amountOre) {
+              ({{ a.amountOre / 100 | currency: o.currency }})
+            }
+            @if (a.error) {
+              — {{ a.error }}
+            }
+            — {{ a.createdAt | date: 'medium' }}
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (success()) {
+    <p>{{ success() }}</p>
+  }
+}
+
+@if (error()) {
+  <p>{{ error() }}</p>
+}

@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id                   String                 @id @default(uuid()) @db.Uuid
+  name                 String
+  slug                 String                 @unique
+  quickpayConnectedAt  DateTime?              @map("quickpay_connected_at")
+  verifoneConnectedAt  DateTime?              @map("verifone_connected_at")
+  clearhausConfirmedAt DateTime?              @map("clearhaus_confirmed_at")
+  createdAt            DateTime               @default(now()) @map("created_at")
+  updatedAt            DateTime               @updatedAt @map("updated_at")
+  users                User[]
+  quickpayConfig       TenantQuickpayConfig?
+  verifoneConfig       TenantVerifoneConfig?
+  platformNotes        PlatformMerchantNote[]
+  invites              TenantInvite[]
+  orders               Order[]
+
+  @@map("tenants")
+}
+
+model TenantQuickpayConfig {
+  tenantId      String    @id @map("tenant_id") @db.Uuid
+  merchantId    String    @map("merchant_id")
+  privateKeyEnc String    @map("private_key_enc")
+  apiKeyEnc     String    @map("api_key_enc")
+  lastPingAt    DateTime? @map("last_ping_at")
+  lastPingOk    Boolean?  @map("last_ping_ok")
+  lastPingError String?   @map("last_ping_error")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_quickpay_config")
+}
+
+model TenantVerifoneConfig {
+  tenantId      String    @id @map("tenant_id") @db.Uuid
+  userUid       String    @map("user_uid")
+  apiKeyEnc     String    @map("api_key_enc")
+  poiId         String    @map("poi_id")
+  saleId        String    @map("sale_id")
+  useSimulator  Boolean   @default(true) @map("use_simulator")
+  lastPingAt    DateTime? @map("last_ping_at")
+  lastPingOk    Boolean?  @map("last_ping_ok")
+  lastPingError String?   @map("last_ping_error")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_verifone_config")
+}
+
+model User {
+  id            String                 @id @default(uuid()) @db.Uuid
+  tenantId      String?                @map("tenant_id") @db.Uuid
+  email         String
+  passwordHash  String                 @map("password_hash")
+  role          String
+  createdAt     DateTime               @default(now()) @map("created_at")
+  updatedAt     DateTime               @updatedAt @map("updated_at")
+  tenant        Tenant?                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  platformNotes PlatformMerchantNote[] @relation("PlatformNoteAuthor")
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("users")
+}
+
+model PlatformMerchantNote {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  author    User     @relation("PlatformNoteAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("platform_merchant_notes")
+}
+
+model TenantInvite {
+  id        String    @id @default(uuid()) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  email     String
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("tenant_invites")
+}
+
+model Order {
+  id               String          @id @default(uuid()) @db.Uuid
+  tenantId         String          @map("tenant_id") @db.Uuid
+  channel          String          @default("online")
+  quickpayOrderRef String          @map("quickpay_order_ref") @db.VarChar(20)
+  amountOre        Int             @map("amount_ore")
+  currency         String          @default("DKK")
+  status           String
+  customerEmail    String?         @map("customer_email")
+  description      String?
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payment          Payment?
+  paymentActions   PaymentAction[]
+
+  @@unique([tenantId, quickpayOrderRef])
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status])
+  @@map("orders")
+}
+
+model Payment {
+  id                       String                @id @default(uuid()) @db.Uuid
+  tenantId                 String                @map("tenant_id") @db.Uuid
+  orderId                  String                @unique @map("order_id") @db.Uuid
+  channel                  String                @default("online")
+  quickpayPaymentId        Int?                  @unique @map("quickpay_payment_id")
+  quickpayMerchantId       String?               @map("quickpay_merchant_id")
+  verifoneTransactionId    String?               @map("verifone_transaction_id")
+  verifonePoiTransactionId String?               @map("verifone_poi_transaction_id")
+  verifonePoiTimestamp     DateTime?             @map("verifone_poi_timestamp")
+  poiId                    String?               @map("poi_id")
+  status                   String
+  amountOre                Int                   @map("amount_ore")
+  refundedAmountOre        Int                   @default(0) @map("refunded_amount_ore")
+  paymentLinkUrl           String?               @map("payment_link_url")
+  currency                 String
+  lastQuickpaySyncAt       DateTime?             @map("last_quickpay_sync_at")
+  createdAt                DateTime              @default(now()) @map("created_at")
+  updatedAt                DateTime              @updatedAt @map("updated_at")
+  order                    Order                 @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  webhookEvents            PaymentWebhookEvent[]
+  paymentActions           PaymentAction[]
+
+  @@index([tenantId])
+  @@map("payments")
+}
+
+model PaymentAction {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  orderId        String   @map("order_id") @db.Uuid
+  paymentId      String   @map("payment_id") @db.Uuid
+  actorUserId    String?  @map("actor_user_id") @db.Uuid
+  action         String
+  amountOre      Int?     @map("amount_ore")
+  status         String
+  gatewayRef     String?  @map("gateway_ref")
+  error          String?
+  idempotencyKey String?  @unique @map("idempotency_key")
+  createdAt      DateTime @default(now()) @map("created_at")
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment        Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, orderId])
+  @@map("payment_actions")
+}
+
+model PaymentWebhookEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  paymentId   String   @map("payment_id") @db.Uuid
+  operationId Int      @map("operation_id")
+  eventType   String   @map("event_type")
+  processedAt DateTime @default(now()) @map("processed_at")
+  payment     Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@unique([paymentId, operationId])
+  @@map("payment_webhook_events")
+}

@@ -1,0 +1,91 @@
+---
+description: Multi-tenant security — correct merchant gets paid, no cross-tenant data access
+globs: Server/**/*,Client/**/*,Shared/**/*
+alwaysApply: true
+---
+
+# Tenant security & payment isolation
+
+**Goal:** The right merchant always gets paid. No merchant sees another merchant’s data, keys, orders, or RNS platform notes.
+
+Canonical plan detail: [PLANS/not-integrated/001-rns-platform-merchant-overview.md](../../PLANS/not-integrated/001-rns-platform-merchant-overview.md) §12.
+
+Also follow **Security & tenancy** in `keep-code-simple.mdc` and payment rules in `payment-setup.mdc`.
+
+---
+
+## Trust boundaries
+
+| Source | Use for tenant authorization? |
+|--------|-------------------------------|
+| JWT `tenantId` (merchant `admin`) | **Yes** — must match URL `/{slug}` |
+| URL `/{slug}` (shop / public checkout) | **Yes** — resolve slug → `tenant_id` server-side |
+| Request body `tenantId` | **No** — never use alone for auth |
+| Quickpay webhook `merchant_id` | **Yes** — must match `tenant_quickpay_config` for that tenant |
+| JWT `platform_admin` | Cross-tenant only on `/api/v1/platform/*` |
+
+Resolve tenant **once per request** on the server. Repositories always query with that `tenantId`.
+
+---
+
+## Data isolation
+
+- Every tenant-scoped repository method requires an explicit `tenantId` parameter; every query includes `where: { tenantId }`.
+- Merchant API: own tenant only. IDOR attempt → **403 or 404** — never return another tenant’s rows.
+- `/api/v1/platform/*` → `requirePlatformAdmin` only; merchant JWT → **403**.
+- Platform support notes, merchant lists, full Quickpay keys → **never** on merchant API routes.
+- Quickpay secrets: encrypt at rest; after save return **masked** values only; never log keys or PANs.
+
+**Client**
+
+- `tenantSlugGuard`: JWT tenant slug must match route `:tenantSlug`.
+- `platformAdminGuard` on `/platform/*`.
+- No shared in-memory/cache keys without tenant prefix (if caching is added later).
+
+---
+
+## Payment isolation (Quickpay)
+
+Design payment code so these invariants always hold:
+
+1. **Create payment:** resolve tenant from **slug** (not body) → load **that** tenant’s `TenantQuickpayConfig` → create `Order` + `Payment` with same `tenant_id` → call Quickpay with **that** API key → set `callbackurl` / `QuickPay-Callback-Url` in code (`API_PUBLIC_URL` + tenant path).
+2. **No shared platform Quickpay key** for merchant checkouts — each merchant BYOK from DB.
+3. Store on `Payment`: `tenant_id`, `quickpay_payment_id`, `quickpay_merchant_id` (from config at creation).
+4. **Webhook:** verify Quickpay checksum with **that tenant’s** private key; cross-check payload `merchant_id` === stored config; load payment by `quickpay_payment_id` **and** `tenant_id`; mismatch → reject, log, no order update.
+5. **Idempotency** on webhook events — duplicates must not double-capture.
+
+Quickpay adapter: accept `tenantId`; load credentials **inside** the adapter — never accept raw API keys from HTTP callers.
+
+---
+
+## Middleware checklist (Server)
+
+| Middleware / guard | Role |
+|--------------------|------|
+| `resolveTenantFromSlug` | Public `{slug}` routes |
+| `requireAuth` | Valid JWT |
+| `requireTenantMatch` | JWT `tenantId` matches resolved slug tenant |
+| `requirePlatformAdmin` | `/platform/*` and `/api/v1/platform/*` |
+
+---
+
+## Roles
+
+| Role | Scope |
+|------|--------|
+| `admin` | One tenant — `/{slug}/admin/*` |
+| `platform_admin` | RNS staff — `/platform/*` only |
+
+Platform users are RNS staff, not merchant users. Do not merge platform and merchant auth paths without explicit impersonation (v2 + audit).
+
+---
+
+## Tests required before production payments
+
+- Merchant A cannot access B’s setup/orders (403/404).
+- Merchant cannot call platform API (403).
+- Checkout on slug A uses A’s Quickpay merchant id (mock Quickpay).
+- Webhook: wrong `merchant_id` or wrong tenant binding → rejected.
+- Webhook replay → idempotent.
+
+Add integration tests when implementing auth, setup, checkout, or webhooks — not optional for payment paths.

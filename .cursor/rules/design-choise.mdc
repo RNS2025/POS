@@ -1,0 +1,26 @@
+---
+description: No unsolicited frontend design or CSS — implement only what is explicitly requested
+globs: Client/**/*.ts,Client/**/*.html,Client/**/*.scss
+alwaysApply: true
+---
+
+# Frontend design — minimal by default
+
+When working on the Angular client (`Client/`):
+
+## Do not add design or styling unless I explicitly ask
+
+- Do **not** write or edit CSS/SCSS (component styles, `styles.scss`, layout, colors, spacing, typography, animations, responsive breakpoints).
+- Do **not** add inline `style` attributes or styling-oriented utility classes for visual polish.
+- Do **not** introduce UI/design libraries (e.g. Tailwind, Bootstrap, Angular Material) unless I request them.
+- Do **not** “improve”, “polish”, or “make it look nice” on your own.
+
+## Only add what I ask for
+
+- Implement the **specific feature, logic, route, service, or markup** I requested — nothing extra.
+- HTML should be **minimal and functional** (structure needed for the feature to work), not a designed UI.
+- If styling is required for the feature to function (e.g. hiding an element), prefer the smallest possible change and only when necessary — otherwise skip styling and tell me if design is needed.
+
+## When I do ask for design
+
+- Follow my instructions exactly; do not expand scope beyond what I described.

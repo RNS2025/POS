@@ -1,0 +1,61 @@
+<h1>Kasse</h1>
+
+<p>
+  <a [routerLink]="['/', tenantSlug, 'admin', 'setup']">← Shop setup</a>
+  ·
+  <a [routerLink]="['/', tenantSlug, 'admin', 'orders']">Orders</a>
+</p>
+
+<app-logout-link />
+
+<p>In-store card payment via Verifone terminal.</p>
+
+<form (ngSubmit)="charge()">
+  <p>
+    <label>
+      Amount (DKK)
+      <input name="amountDkk" type="number" min="1" step="0.01" [(ngModel)]="amountDkk" required />
+    </label>
+  </p>
+  <p>
+    <label>
+      Note (optional)
+      <input name="description" [(ngModel)]="description" />
+    </label>
+  </p>
+
+  @if (error()) {
+    <p>{{ error() }}</p>
+  }
+  @if (success()) {
+    <p>{{ success() }} @if (lastAmountOre(); as a) { — {{ a / 100 | currency: 'DKK' }} }</p>
+  }
+
+  @if (lastOrderId(); as oid) {
+    <p>
+      Order:
+      <a [routerLink]="['/', tenantSlug, 'admin', 'orders', oid]">{{ oid }}</a>
+      @if (error()) {
+        <button type="button" (click)="retryLast()" [disabled]="loading()">Retry this order</button>
+      }
+    </p>
+  }
+
+  @if (pendingOrderId(); as pid) {
+    <p>
+      Payment in progress…
+      <button type="button" (click)="abortPending()">Cancel on terminal</button>
+    </p>
+  }
+
+  <p>
+    <button type="submit" [disabled]="loading()">Charge card</button>
+  </p>
+</form>
+
+<p>
+  The terminal prompts the customer. In simulator mode, payment is approved automatically.
+  See
+  <a href="https://docs.verifone.com/pos-cloud/pos-cloud-guide/readme-1/testing/testing-integration" target="_blank" rel="noopener">Verifone testing guide</a>
+  for test scenarios.
+</p>

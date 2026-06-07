@@ -1,0 +1,172 @@
+---
+description: Architecture, SOLID, GoF, pagination, security, payments, EU compliance — keep code simple
+alwaysApply: true
+---
+
+# Keep it simple
+
+Follow the existing folder structure. Add only what is needed for the requested feature. Prefer clarity over cleverness — but **do** apply SOLID and well-chosen [Gang of Four (GoF) design patterns](https://www.geeksforgeeks.org/system-design/gang-of-four-gof-design-patterns/) where they fit naturally.
+
+## SOLID
+
+Apply [SOLID](https://en.wikipedia.org/wiki/SOLID) principles in TypeScript:
+
+- **S — Single Responsibility:** Each class/file has one job (repository = data access, service = business logic, controller = HTTP).
+- **O — Open/Closed:** Extend behavior via new implementations (e.g. new strategy, new repository) rather than editing unrelated code.
+- **L — Liskov Substitution:** Implementations of an interface must be interchangeable without breaking callers.
+- **I — Interface Segregation:** Small, focused interfaces — do not force classes to implement methods they do not use.
+- **D — Dependency Inversion:** Depend on **interfaces/abstractions**, not concrete classes. Services receive repositories via constructor injection; controllers receive services the same way.
+
+Use **`interface`** (or abstract classes when justified) for contracts between layers — e.g. `IUserRepository`, `IAuthService`. Concrete implementations live in the matching folder.
+
+## GoF design patterns (use pragmatically)
+
+Reference: [GoF Design Patterns — GeeksforGeeks](https://www.geeksforgeeks.org/system-design/gang-of-four-gof-design-patterns/)
+
+Use patterns **only when they solve a real problem** in this codebase — not every pattern on every feature.
+
+| Pattern | When to use here |
+|---------|------------------|
+| **Repository** (data access) | All Prisma/database access — already our standard layer |
+| **Facade** | Service layer simplifying repository + external API calls for controllers |
+| **Strategy** | Payment channel adapters (`IOnlinePaymentAdapter` / Quickpay vs `ITerminalPaymentAdapter` / Verifone POS Cloud); other swappable rules (pricing, payment method) |
+| **Factory / Abstract Factory** | Creating the right strategy or payment handler without `if/else` chains |
+| **Adapter** | Wrapping external systems (Quickpay, Verifone POS Cloud, webhooks) behind our own interface |
+| **Singleton** | Shared app-wide instances only where appropriate (e.g. Prisma client in `infra/db.ts`) |
+| **Observer** | Event-style side effects (webhooks, notifications) when decoupling is needed |
+| **Decorator** | Adding cross-cutting behavior without modifying core logic (e.g. logging, retry) |
+
+**Creational:** Factory, Singleton — sparingly.  
+**Structural:** Adapter, Facade, Repository — most common in this project.  
+**Behavioral:** Strategy, Observer, State — when flow or behavior varies by context.
+
+Do **not** introduce patterns that add layers without a clear need (e.g. Mediator, Visitor, Flyweight for CRUD).
+
+## Backend (`Server/src/`)
+
+For each feature, add layers in this order — one concern per file:
+
+1. **Model** — `prisma/schema.prisma` (Prisma models + migration)
+2. **Repository** — `repositories/<name>.repository.ts` (implements `I<Name>Repository`; Prisma only)
+3. **Service** — `services/<name>.service.ts` (implements `I<Name>Service`; business logic; depends on repository interfaces)
+4. **Controller** — `controllers/<name>.controller.ts` (HTTP: parse request, call service interface, send response)
+5. **Route** — register in `routes/` (wire method + path to controller)
+
+### Backend rules
+
+- **Routes → controllers → services → repositories → Prisma.** Do not skip layers or call Prisma from controllers.
+- Controllers stay thin (no business logic, no direct Prisma).
+- Services do not know about Express `req`/`res`.
+- One repository per aggregate (e.g. `user.repository.ts`, `order.repository.ts`).
+- Define **interfaces** alongside implementations (e.g. `repositories/user.repository.interface.ts` or co-located `IUserRepository` in the same feature folder).
+- Do not add microservices, event buses, or generic “BaseService” hierarchies unless explicitly requested.
+
+## Client (`Client/src/app/`)
+
+- **Pages** — `features/<feature>/pages/` (route targets, minimal orchestration)
+- **Components** — `features/<feature>/components/` (UI pieces used by pages)
+- **Services** — `core/services/` or `features/<feature>/services/` (HTTP calls to the backend only)
+
+### Client rules
+
+- Pages call services; services call `/api/*`. No business logic duplicated from the backend.
+- Use **interfaces** for service contracts and typed API responses (from `Shared/types/`).
+- No NgRx, signals stores, or state libraries unless explicitly requested.
+- No feature modules, shared “utils” folders, or helpers unless needed for the specific task.
+- Keep components and pages small and boring.
+
+### Client data & sync (no caching)
+
+- **Do not add caching** — no HTTP caches, service-worker caches, `localStorage`/`sessionStorage` for API data, TanStack Query cache layers, or similar. Caching causes stale/out-of-sync UI; we are not using it yet.
+- **After POST/PUT/PATCH success:** update client state from the **response body** returned by the server (append to a list, replace one item, patch fields in a signal/store). Do **not** refetch the full list or reload the page unless explicitly requested or the response is insufficient.
+- **GET** loads data when a page opens; **mutations** trust the server response as the source of truth for what changed.
+- Backend: do not add Redis or response caching unless explicitly requested.
+
+### Pagination & lazy loading (always)
+
+Use **automated pagination** and **lazy loading** for every list or collection — never load unbounded datasets.
+
+**Backend**
+
+- All list endpoints accept pagination params (e.g. `page` + `limit`, or `cursor` + `limit`) and return a **paginated envelope** (items + `total` / `hasMore` / `nextCursor`).
+- Repositories/services use Prisma `skip`/`take` or cursor-based queries — never `findMany()` without a limit on user-facing lists.
+- Define default page size (e.g. 20) and enforce a max limit.
+- Shared shape in `Shared/types/` (e.g. `PaginatedResponse<T>`).
+
+**Client**
+
+- **Lazy load:** fetch the first page when a page/view opens; load the next page when the user scrolls near the end, clicks “Load more”, or equivalent — do not request all rows upfront.
+- **Append** new pages to existing in-memory list state (do not replace the full list on page 2+ unless refreshing).
+- After a successful **POST**, add the returned item to the current list if it belongs on screen — do not refetch all pages.
+- List services accept page/cursor params and return the shared paginated type.
+
+**Do not** implement unpaginated “get all” APIs or client calls except for tiny fixed sets (e.g. enum-like config) explicitly approved.
+
+## Shared types (`Shared/types/`)
+
+- API request/response shapes and domain types used by **both** client and server live in `Shared/types/`.
+- Define each type **once**; import from `Shared/` in Server and Client.
+- Do not duplicate DTO interfaces in `Client` and `Server` separately.
+- Server may use Zod (or similar) for validation, but the **shape** should match the shared type.
+- Define request/response types in `Shared/types/` **before** implementing a new endpoint.
+
+## Security & tenancy
+
+**Multi-tenant payment isolation and cross-tenant access rules:** see **`tenant-security.mdc`** (always apply).
+
+- **`tenant_id` on every tenant-scoped query** — resolve tenant from JWT or slug; never trust `tenantId` from the client body alone.
+- **Auth:** hash passwords (bcrypt/argon2); never return `passwordHash`; protect `/admin` and `/kasse` with JWT + role guards.
+- **Validate all API input** with Zod (or similar) — shared types describe shape; validation enforces it.
+- **Rate-limit** login and other sensitive endpoints.
+- **Quickpay / Verifone:** API keys and private keys **server-only**; never store raw card data; never log secrets or PANs.
+- **Consistent API errors** — e.g. `{ error: string }` with correct HTTP status (400, 401, 403, 409, 500); do not leak stack traces to clients.
+
+## Payments & async
+
+**Always consult `payment-setup.mdc` before implementing payment, checkout, webhook, or terminal code** — online via [Quickpay](https://learn.quickpay.net/tech-talk/), in-store via [Verifone POS Cloud](https://docs.verifone.com/pos-cloud).
+
+- **Webhooks:** verify signature → persist event → return 200 quickly → process in a worker/queue.
+- **Idempotency** on payments and webhooks — duplicate events must not double-charge or duplicate side effects.
+- **Payment state machine** — e.g. `created → authorized → captured → failed / refunded`; transitions are explicit.
+- **Queues for async work** (webhooks, receipts, retries) are allowed — distinct from HTTP/Redis **caching**, which we avoid for now.
+- Use **Prisma transactions** when updating multiple related records (order + payment + inventory).
+
+## Data & API conventions
+
+- **Timestamps** (`createdAt`, `updatedAt`) on business tables.
+- **Sort/filter** query params alongside pagination on list endpoints.
+- Prefer **`/api/v1/...`** if the API may serve external or mobile clients long-term.
+- Define **soft delete vs hard delete** and GDPR export/delete per tenant when handling merchant data.
+
+## Client (auth & UX without design)
+
+- **Auth interceptor** — attach Bearer token to API calls.
+- **Route guards** — restrict `/admin` and `/kasse` to authenticated staff.
+- **Loading, error, and empty states** on lists and forms — minimal markup only (no styling unless asked).
+- Prefer **server response as truth** after mutations; avoid optimistic UI for payment flows unless explicitly requested.
+- **Lazy-load Angular feature routes** (`loadComponent`) where it keeps bundles small.
+
+## DevOps & quality
+
+- **Never commit `.env`** — use `.env.example` for documentation only.
+- **Review Prisma migration SQL** before applying; use `prisma migrate dev`, not ad-hoc schema drift.
+- Run **`prisma generate`** after schema changes (CI/postinstall when applicable).
+- **Structured logging** and a **correlation id** per request for tracing payment issues.
+- **Tests** for tenant isolation, auth, and critical payment paths — at least integration tests on happy and error paths.
+
+## EU / compliance (always EU)
+
+- **GDPR:** ability to export/delete a tenant’s data; EU-appropriate hosting and retention policy.
+- **PSD2 / 3DS:** handle SCA in the single shared checkout module (`features/checkout`).
+- **Audit log** for payment, refund, and merchant-setting changes (who, when, what).
+
+## Process
+
+- **One feature = one vertical slice:** schema → repository → service → controller → route → shared types → client service → page.
+
+## General
+
+- Implement only what was asked — no speculative features, refactors, or “while we’re here” changes.
+- Match naming and style of neighboring files in the same layer.
+- **Simple first:** one clear class per layer beats a pattern applied for its own sake.
+- When a GoF pattern fits (see table above), use it with an interface so the code stays testable and swappable.

@@ -1,0 +1,35 @@
+<h1>Welcome to your shop</h1>
+
+@if (loading()) {
+  <p>Loading…</p>
+} @else if (invite(); as inv) {
+  @if (inv.used) {
+    <p>This invite has already been used. <a routerLink="/login">Log in</a> with your shop web address.</p>
+  } @else if (inv.expired) {
+    <p>This invite has expired. Contact RNS support for a new link.</p>
+  } @else {
+    <p>You are setting up <strong>{{ inv.shopName }}</strong>.</p>
+    <p>Shop link: payment.rns-apps.dk/{{ inv.slug }}</p>
+    <p>Email: {{ inv.email }}</p>
+
+    <form (ngSubmit)="submit()">
+      <p>
+        <label>
+          Choose a password
+          <input name="password" type="password" [(ngModel)]="password" required />
+        </label>
+      </p>
+      <p>At least 8 characters (maximum 128)</p>
+
+      @if (error()) {
+        <p>{{ error() }}</p>
+      }
+
+      <p>
+        <button type="submit" [disabled]="submitting()">Create account and open setup</button>
+      </p>
+    </form>
+  }
+} @else if (error()) {
+  <p>{{ error() }}</p>
+}

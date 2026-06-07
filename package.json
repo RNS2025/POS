@@ -11,6 +11,10 @@
     "docker:postgres:stop": "docker compose stop postgres",
     "open:client": "wait-on http://localhost:4200 && open-cli http://localhost:4200",
     "fix:errors": "node scripts/fix-server-errors.mjs",
+    "worktree:new": "node scripts/worktree-new.mjs",
+    "worktree:merge": "node scripts/worktree-merge.mjs",
+    "worktree:discard": "node scripts/worktree-discard.mjs",
+    "worktree:list": "node scripts/worktree-list.mjs",
     "install:all": "npm install && npm install --prefix Server && npm install --prefix Client",
     "postinstall": "npm install --prefix Server && npm install --prefix Client"
   },

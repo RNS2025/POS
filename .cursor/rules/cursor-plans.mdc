@@ -1,0 +1,56 @@
+---
+description: Where and how to save Cursor implementation plans in this repo
+alwaysApply: true
+---
+
+# Cursor plans — PLANS folder
+
+All implementation plans created via Cursor (writing-plans, Plan mode, or similar) **must** be saved under `PLANS/` — not `docs/superpowers/plans/`, `.cursor/plans/`, or the repo root.
+
+## Folder layout
+
+```text
+PLANS/
+  integrated/       # Plans whose work is merged or otherwise complete
+  not-integrated/   # Plans not yet implemented (default for new plans)
+```
+
+## Numbering
+
+Every new plan gets the **next sequential 3-digit number** across **both** subfolders.
+
+1. List files in `PLANS/integrated/` and `PLANS/not-integrated/`.
+2. Parse leading `NNN-` from each filename (e.g. `003-auth.md` → 3).
+3. Next number = max + 1, zero-padded to 3 digits (`001`, `002`, …).
+
+## New plan path
+
+Save new plans to:
+
+```text
+PLANS/not-integrated/NNN-<short-kebab-feature-name>.md
+```
+
+Example: `PLANS/not-integrated/002-merchant-settings.md`
+
+## After implementation
+
+When the plan’s work is merged (or the user confirms it is done), **move** the file to:
+
+```text
+PLANS/integrated/NNN-<short-kebab-feature-name>.md
+```
+
+Keep the same `NNN-` prefix when moving — do not renumber.
+
+## Plan header
+
+Include at the top of every plan:
+
+```markdown
+**Plan #:** NNN
+**Status:** not integrated | integrated
+**Created:** YYYY-MM-DD
+```
+
+Update `Status` and move the file when integration is complete.

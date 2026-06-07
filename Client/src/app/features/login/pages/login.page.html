@@ -1,0 +1,62 @@
+<h1>Log in</h1>
+
+<app-logout-link />
+
+<form (ngSubmit)="submit()">
+
+  <p>
+
+    <label>
+
+      Shop web address
+
+      <input name="tenantSlug" [(ngModel)]="tenantSlug" placeholder="acme-bakery" />
+
+    </label>
+
+  </p>
+
+  <p>The name from your shop link — e.g. payment.rns-apps.dk/acme-bakery. Leave blank for RNS platform staff.</p>
+
+  <p>
+
+    <label>
+
+      Email
+
+      <input name="email" type="email" [(ngModel)]="email" required />
+
+    </label>
+
+  </p>
+
+  <p>
+
+    <label>
+
+      Password
+
+      <input name="password" type="password" [(ngModel)]="password" required />
+
+    </label>
+
+  </p>
+
+  @if (error()) {
+
+    <p>{{ error() }}</p>
+
+  }
+
+  <p>
+
+    <button type="submit" [disabled]="loading()">Log in</button>
+
+  </p>
+
+</form>
+
+
+
+<p><a routerLink="/register">Create a new shop</a></p>
+

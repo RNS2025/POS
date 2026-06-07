@@ -1,0 +1,86 @@
+<h1>Orders</h1>
+
+<p>
+  <a [routerLink]="['/', tenantSlug, 'admin', 'setup']">← Shop setup</a>
+  ·
+  <a [routerLink]="['/', tenantSlug, 'kasse']">Kasse</a>
+</p>
+
+<app-logout-link />
+
+@if (loading() && items().length === 0) {
+  <p>Loading…</p>
+} @else {
+  <section>
+    <p>
+      <label>
+        Status
+        <select name="statusFilter" [(ngModel)]="statusFilter" (change)="applyFilters()">
+          <option value="">All</option>
+          <option value="pending">Pending</option>
+          <option value="captured">Captured</option>
+          <option value="failed">Failed</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="partially_refunded">Partially refunded</option>
+          <option value="refunded">Refunded</option>
+        </select>
+      </label>
+      <label>
+        Channel
+        <select name="channelFilter" [(ngModel)]="channelFilter" (change)="applyFilters()">
+          <option value="">All</option>
+          <option value="online">Online</option>
+          <option value="terminal">In-store</option>
+        </select>
+      </label>
+      <label>
+        Search
+        <input name="searchQuery" [(ngModel)]="searchQuery" placeholder="Ref or email" />
+      </label>
+      <button type="button" (click)="applyFilters()">Filter</button>
+    </p>
+
+    @if (items().length === 0) {
+      <p>No orders found.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Ref</th>
+            <th>Channel</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Customer</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (o of items(); track o.id) {
+            <tr>
+              <td>
+                <a [routerLink]="['/', tenantSlug, 'admin', 'orders', o.id]">{{ o.quickpayOrderRef }}</a>
+              </td>
+              <td>{{ o.channel === 'terminal' ? 'In-store' : 'Online' }}</td>
+              <td>{{ o.amountOre / 100 | currency: o.currency }}</td>
+              <td>{{ o.status }}</td>
+              <td>{{ o.paymentStatus ?? '—' }}</td>
+              <td>{{ o.customerEmail ?? '—' }}</td>
+              <td>{{ o.createdAt | date: 'medium' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <p>
+        Page {{ page() }} — {{ total() }} total
+        <button type="button" (click)="prevPage()" [disabled]="page() <= 1">Previous</button>
+        <button type="button" (click)="nextPage()" [disabled]="page() * limit >= total()">Next</button>
+      </p>
+    }
+  </section>
+}
+
+@if (error()) {
+  <p>{{ error() }}</p>
+}

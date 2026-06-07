@@ -1,0 +1,45 @@
+<p><a routerLink="/platform/merchants">← All merchants</a></p>
+
+<h1>Create merchant</h1>
+
+<app-logout-link />
+
+@if (created()) {
+  <section>
+    <p>Merchant created. Send this invite link to the shop owner:</p>
+    <p><strong>{{ inviteUrl() }}</strong></p>
+    <p>They use it to set their password and open shop setup.</p>
+    <p><button type="button" (click)="openMerchant()">Back to merchant list</button></p>
+  </section>
+} @else {
+  <form (ngSubmit)="submit()">
+    <p>
+      <label>
+        Shop name
+        <input name="shopName" [(ngModel)]="shopName" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        Shop web address
+        <input name="slug" [(ngModel)]="slug" required placeholder="acme-bakery" />
+      </label>
+    </p>
+    <p>Lowercase letters, numbers, and hyphens — e.g. payment.rns-apps.dk/acme-bakery</p>
+    <p>
+      <label>
+        Owner email
+        <input name="adminEmail" type="email" [(ngModel)]="adminEmail" required />
+      </label>
+    </p>
+    <p>We send them an invite link to set their password.</p>
+
+    @if (error()) {
+      <p>{{ error() }}</p>
+    }
+
+    <p>
+      <button type="submit" [disabled]="loading()">Create and get invite link</button>
+    </p>
+  </form>
+}

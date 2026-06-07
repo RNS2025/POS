@@ -1,0 +1,21 @@
+<h1>Payment</h1>
+
+@if (order(); as o) {
+  @if (o.status === 'captured') {
+    <p>Thank you — your payment was successful.</p>
+  } @else if (o.status === 'authorized') {
+    <p>Payment authorized. Waiting for confirmation.</p>
+  } @else if (o.status === 'failed') {
+    <p>Payment failed. Try again or contact the shop.</p>
+  } @else {
+    <p>Payment is being processed. Refresh this page in a moment.</p>
+  }
+  <p>Amount: {{ o.amountOre / 100 | currency: o.currency }}</p>
+  <p>Status: {{ o.status }}</p>
+} @else if (error()) {
+  <p>{{ error() }}</p>
+} @else {
+  <p>Loading order…</p>
+}
+
+<p><a [routerLink]="['/', tenantSlug]">Back to shop</a></p>

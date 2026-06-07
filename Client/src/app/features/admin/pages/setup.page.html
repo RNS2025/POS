@@ -1,0 +1,247 @@
+<h1>Shop setup</h1>
+
+<p>
+  <a [routerLink]="['/', tenantSlug, 'admin', 'orders']">Orders</a>
+  @if (setup()?.quickpayConnected) {
+    · <a [routerLink]="['/', tenantSlug, 'checkout']">Test online checkout</a>
+  }
+  @if (setup()?.verifoneConnected) {
+    · <a [routerLink]="['/', tenantSlug, 'kasse']">Open kasse</a>
+  }
+</p>
+
+<app-logout-link />
+
+@if (loading()) {
+
+  <p>Loading…</p>
+
+} @else if (setup(); as s) {
+
+  <section>
+
+    <h2>What we need from you</h2>
+
+    <p>{{ s.shopName }}</p>
+
+    <p>Your shop link: payment.rns-apps.dk/{{ s.slug }}</p>
+
+    <p>
+
+      Quickpay connection:
+
+      @if (s.quickpayConnected) {
+
+        Connected — ready for test payments
+
+      } @else {
+
+        Not connected yet
+
+      }
+
+    </p>
+
+    @if (s.lastPingError && !error()) {
+
+      <p>Quickpay connection problem: {{ s.lastPingError }}</p>
+
+    }
+
+
+
+    <form (ngSubmit)="saveQuickpay()">
+
+      <p>Copy these from Quickpay Manager → Settings → Integration.</p>
+
+      <p>
+
+        <label>
+
+          Merchant number
+
+          <input name="merchantId" [(ngModel)]="merchantId" required />
+
+        </label>
+
+      </p>
+
+      <p>
+
+        <label>
+
+          Private key
+
+          <input name="privateKey" type="password" [(ngModel)]="privateKey" [placeholder]="s.quickpay?.privateKeyMasked ?? 'Paste from Quickpay'" />
+
+        </label>
+
+      </p>
+
+      <p>
+
+        <label>
+
+          Payment window key
+
+          <input name="apiKey" type="password" [(ngModel)]="apiKey" [placeholder]="s.quickpay?.apiKeyMasked ?? 'Use the Payment Window user key'" />
+
+        </label>
+
+      </p>
+
+      @if (error()) {
+
+        <p>{{ error() }}</p>
+
+      }
+
+      <p>
+
+        <button type="submit" [disabled]="saving()">Save and test connection</button>
+
+      </p>
+
+    </form>
+
+  </section>
+
+
+
+  <section>
+
+    <h2>In-store terminal (Verifone)</h2>
+
+    <p>
+
+      Verifone connection:
+
+      @if (s.verifoneConnected) {
+
+        Connected — kasse ready
+
+      } @else {
+
+        Not connected yet
+
+      }
+
+    </p>
+
+    @if (s.verifoneLastPingError && !error()) {
+
+      <p>Verifone problem: {{ s.verifoneLastPingError }}</p>
+
+    }
+
+    @if (s.verifoneConnected) {
+
+      <p><a [routerLink]="['/', tenantSlug, 'kasse']">Open kasse</a></p>
+
+    }
+
+    <details>
+      <summary>Verifone test guide</summary>
+      <p>
+        Use simulator mode for local testing. See the
+        <a href="https://docs.verifone.com/pos-cloud/pos-cloud-guide/readme-1/testing/testing-integration" target="_blank" rel="noopener">Verifone testing integration guide</a>
+        for sale, refund, reversal, and abort scenarios.
+      </p>
+    </details>
+
+    <form (ngSubmit)="saveVerifone()">
+
+      <p>Copy these from Verifone Central. Use simulator mode for local testing without a physical terminal.</p>
+
+      <p>
+
+        <label>
+
+          User UID
+
+          <input name="verifoneUserUid" [(ngModel)]="verifoneUserUid" required />
+
+        </label>
+
+      </p>
+
+      <p>
+
+        <label>
+
+          API key
+
+          <input name="verifoneApiKey" type="password" [(ngModel)]="verifoneApiKey" [placeholder]="s.verifone?.apiKeyMasked ?? 'From Verifone Central'" />
+
+        </label>
+
+      </p>
+
+      <p>
+
+        <label>
+
+          Terminal ID (POIID)
+
+          <input name="verifonePoiId" [(ngModel)]="verifonePoiId" required />
+
+        </label>
+
+      </p>
+
+      <p>
+
+        <label>
+
+          Sale ID
+
+          <input name="verifoneSaleId" [(ngModel)]="verifoneSaleId" required />
+
+        </label>
+
+      </p>
+
+      <p>
+
+        <label>
+
+          <input type="checkbox" name="verifoneUseSimulator" [(ngModel)]="verifoneUseSimulator" />
+
+          Use Verifone simulator (recommended for testing)
+
+        </label>
+
+      </p>
+
+      <p>
+
+        <button type="submit" [disabled]="savingVerifone()">Save and test Verifone</button>
+
+      </p>
+
+    </form>
+
+  </section>
+
+
+
+  <section>
+
+    <h2>Setup guides — we help you with these</h2>
+
+    <ol>
+
+      @for (guide of s.guides; track guide.title) {
+
+        <li>{{ guide.title }}</li>
+
+      }
+
+    </ol>
+
+    <p>Need help? Contact RNS-Apps support.</p>
+
+  </section>
+
+}
+

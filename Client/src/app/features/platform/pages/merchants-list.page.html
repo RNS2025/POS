@@ -1,0 +1,95 @@
+<h1>RNS merchants</h1>
+
+<p><a routerLink="/platform/merchants/new">Create merchant</a></p>
+
+<app-logout-link />
+
+@if (stats(); as s) {
+  <section>
+    <h2>Overview</h2>
+    <p>Total: {{ s.total }}</p>
+    <ul>
+      <li>Registered: {{ s.byStatus.registered }}</li>
+      <li>Quickpay connected: {{ s.byStatus.quickpay_connected }}</li>
+      <li>Awaiting Clearhaus: {{ s.byStatus.clearhaus_pending }}</li>
+      <li>Live: {{ s.byStatus.live }}</li>
+      <li>Needs attention: {{ s.byStatus.attention }}</li>
+    </ul>
+    <h3>Orders</h3>
+    <ul>
+      <li>Total orders: {{ s.totalOrders }}</li>
+      <li>Last 7 days: {{ s.ordersLast7Days }}</li>
+      <li>Captured: {{ s.capturedOrders }}</li>
+    </ul>
+  </section>
+}
+
+@if (loading() && merchants().length === 0) {
+  <p>Loading…</p>
+} @else {
+  <form (ngSubmit)="applyFilters()">
+    <p>
+      <label>
+        Search
+        <input name="search" [(ngModel)]="search" placeholder="Shop name, web address, or email" />
+      </label>
+    </p>
+    <p>
+      <label>
+        Status
+        <select name="status" [(ngModel)]="statusFilter">
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </label>
+    </p>
+    <p>
+      <button type="submit" [disabled]="loading()">Apply</button>
+      <button type="button" (click)="exportCsv()" [disabled]="loading()">Export CSV</button>
+    </p>
+  </form>
+
+  @if (error()) {
+    <p>{{ error() }}</p>
+  }
+
+  <p>{{ total() }} merchant(s)</p>
+
+  @if (merchants().length === 0) {
+    <p>No merchants match your filters.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Shop</th>
+          <th>Web address</th>
+          <th>Status</th>
+          <th>Contact</th>
+          <th>Orders</th>
+          <th>Last order</th>
+          <th>Registered</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (m of merchants(); track m.id) {
+          <tr>
+            <td><a [routerLink]="['/platform', 'merchants', m.id]">{{ m.name }}</a></td>
+            <td>{{ m.slug }}</td>
+            <td>{{ statusLabel(m.status) }}</td>
+            <td>{{ m.primaryContactEmail ?? '—' }}</td>
+            <td>{{ m.orderCount }}</td>
+            <td>{{ m.lastOrderAt ? (m.lastOrderAt | date: 'mediumDate') : '—' }}</td>
+            <td>{{ m.createdAt | date: 'mediumDate' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  <p>
+    <button type="button" (click)="prevPage()" [disabled]="page() <= 1 || loading()">Previous</button>
+    Page {{ page() }}
+    <button type="button" (click)="nextPage()" [disabled]="!hasMore() || loading()">Next</button>
+  </p>
+}

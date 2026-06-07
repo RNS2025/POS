@@ -1,0 +1,74 @@
+---
+description: Payment setup — Quickpay (online) and Verifone POS Cloud (terminals)
+globs: Server/**/*payment*,Server/**/*quickpay*,Server/**/*verifone*,Client/**/checkout/**,Client/**/kasse/**,Shared/types/**/*payment*
+alwaysApply: true
+---
+
+# Payment setup — Quickpay + Verifone POS Cloud
+
+**Always reference the official documentation below** before implementing or changing anything related to payments, checkout, webhooks, merchant onboarding, or terminal integration. Do not guess API shapes, flows, or compliance behavior — verify against the docs.
+
+## Two payment rails (by channel)
+
+| Channel | Provider | Where in the app |
+|---------|----------|------------------|
+| **Online** (self-service shop, CNP) | **Quickpay** | `Client/src/app/features/checkout/` + server Quickpay adapter |
+| **In-store** (kasse + physical terminal, card-present) | **Verifone POS Cloud** | `Client/src/app/features/kasse/` + server Verifone adapter |
+
+Do **not** use Verifone eCommerce / Hosted Checkout for web — online goes through **Quickpay**.
+
+## Official Quickpay documentation (online)
+
+| Topic | URL |
+|-------|-----|
+| **Tech talk / API** | https://learn.quickpay.net/tech-talk/ |
+| **REST API reference** | https://learn.quickpay.net/tech-talk/api/ |
+| **Payment Window** | https://quickpay.net/helpdesk/payment-window/ |
+| **Integration setup** (keys, users) | https://quickpay.net/helpdesk/integration-setup/ |
+| **Helpdesk / API testing** | https://quickpay.net/helpdesk/quickpay-api/ |
+
+## Official Verifone documentation (terminals)
+
+| Topic | URL |
+|-------|-----|
+| **Developer portal** | https://docs.verifone.com/ |
+| **POS Cloud — getting started** | https://docs.verifone.com/pos-cloud |
+
+Use **POS Cloud** (cloud REST API to onboarded terminals), not **XPI** (local native POS ↔ pinpad) unless explicitly requested for a native kasse app.
+
+## Project rules for payments
+
+### Online (Quickpay)
+
+- **One shared checkout flow** for all merchants — per-tenant **Quickpay `branding_id`** (logo/theme), not forked payment logic per tenant.
+- **Server-only:** Quickpay API calls, private key, webhook verification — never in the Angular client.
+- **Adapter pattern:** wrap Quickpay in `Server/src/` (e.g. `services/quickpay/` or `infra/quickpay/`) behind `IOnlinePaymentAdapter` (or similar).
+- Typical flow: create payment → payment link / Payment Window URL → customer pays → **webhook/callback** → capture/settle per Quickpay docs.
+- API auth: HTTP Basic Auth (`:apikey`), header `Accept-Version: v10`.
+
+### In-store (Verifone POS Cloud)
+
+- Kasse sends amount/order to **your API** → server calls Verifone POS Cloud → terminal prompts customer → result returned to kasse.
+- **Server-only:** Verifone credentials, Basic Auth, API keys — never in the client.
+- **Adapter pattern:** wrap Verifone in `Server/src/` (e.g. `services/verifone/` or `infra/verifone/`) behind `ITerminalPaymentAdapter`.
+- Dev path: Verifone simulator first, then physical terminal with POS Cloud enabled.
+- Same **order/payment model** as online; channel differs (`online` vs `terminal`).
+
+### Shared
+
+- Follow **Payments & async**, **Security & tenancy**, and **EU / compliance** in `keep-code-simple.mdc`.
+- Follow **`tenant-security.mdc`** for tenant isolation, payment binding, and webhook verification.
+- **Strategy pattern:** select Quickpay vs Verifone adapter by payment channel — do not mix gateway calls in one god-service.
+- **Idempotency** on payments and webhooks; verify webhook signatures before processing.
+- **Payment state machine** — e.g. `created → authorized → captured → failed / refunded`.
+
+## Before writing payment code
+
+1. Read the relevant doc section for the operation (Quickpay: payment, link, capture, callback; Verifone: sale, status, refund).
+2. Align with layered backend: model → repository → service → controller → route.
+3. Define request/response types in `Shared/types/` first.
+4. If docs and our code disagree, **docs win** — ask the user if something is intentionally custom.
+
+## Internal docs (when added)
+
+If the repo gains `docs/payment/`, treat it as supplementary to official Quickpay and Verifone docs — not a replacement.

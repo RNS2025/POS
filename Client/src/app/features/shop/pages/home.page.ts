@@ -1,33 +1,31 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
-import { UserRepository } from '../../../../Server/src/repositories/user.repository';
+import { isValidShopSlug } from '../../../core/utils/shop-slug';
 
 @Component({
   selector: 'app-home-page',
+  imports: [RouterLink],
   templateUrl: './home.page.html',
-  styleUrl: './home.page.scss',
 })
 export class HomePage implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly route = inject(ActivatedRoute);
 
-  protected readonly health = signal<string>('Checking API…');
+  protected tenantSlug = '';
+  protected isValidSlug = false;
+  protected readonly status = signal<string>('');
 
   ngOnInit(): void {
+    this.tenantSlug = this.route.snapshot.paramMap.get('tenantSlug') ?? '';
+    this.isValidSlug = isValidShopSlug(this.tenantSlug);
     this.api.getHealth().subscribe({
       next: (res) => {
-        this.health.set(`API ${res.status} · DB ${res.db} · ${res.timestamp}`);
+        this.status.set(`API ${res.status} · DB ${res.db}`);
       },
       error: () => {
-        this.health.set('API unreachable — is the Express server running on port 3000?');
+        this.status.set('API unreachable');
       },
-    });
-  }
-
-  createUser(): void {
-    const userRepository = new UserRepository();
-    userRepository.createUser({
-      email: 'test@example.com',
-      password: 'password',
     });
   }
 }
