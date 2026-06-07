@@ -1,0 +1,9 @@
+{
+  "files.exclude": {
+    "**/Server/express-gen-ts": true
+  },
+  "search.exclude": {
+    "**/Server/express-gen-ts": true
+  },
+  "typescript.preferences.autoImportFileExcludePatterns": ["**/Server/express-gen-ts/**"]
+}

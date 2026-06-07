@@ -1,0 +1,22 @@
+{
+  "name": "pos",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Multi-tenant POS platform — root dev orchestration",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:server": "npm run dev --prefix Server",
+    "dev:client": "npm start --prefix Client",
+    "docker:postgres": "docker compose up -d postgres",
+    "docker:postgres:stop": "docker compose stop postgres",
+    "open:client": "wait-on http://localhost:4200 && open-cli http://localhost:4200",
+    "fix:errors": "node scripts/fix-server-errors.mjs",
+    "install:all": "npm install && npm install --prefix Server && npm install --prefix Client",
+    "postinstall": "npm install --prefix Server && npm install --prefix Client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "open-cli": "^8.0.0",
+    "wait-on": "^8.0.3"
+  }
+}

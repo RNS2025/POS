@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+
+# Angular
+Client/.angular/
+Client/dist/
+
+# Server
+Server/dist/
+
+# IDE
+.idea/

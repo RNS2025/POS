@@ -1,0 +1,28 @@
+---
+description: Angular best practices for the POS client — use with Angular CLI MCP
+globs: Client/**/*.ts,Client/**/*.html,Client/**/*.scss
+alwaysApply: false
+---
+
+# Angular client (POS)
+
+When editing the Angular app under `Client/`:
+
+1. Use the **angular-cli** MCP server tools before generating or refactoring code:
+   - `get_best_practices` — standalone components, signals, typed forms, modern control flow (`@if`, `@for`)
+   - `search_documentation` — official APIs and patterns
+   - `list_projects` — workspace layout (`pos-web` in `Client/`)
+
+2. Follow the project layout:
+   - `Client/src/app/` — root shell, routes, config
+   - `Client/src/features/` — shop, kasse, admin, checkout (feature folders)
+   - `Client/src/core/` — singleton services, guards, interceptors
+   - `Client/src/shared/` — presentational components
+
+3. Prefer **standalone components**, **inject()**, and **signals** over NgModules and `@Input()` boilerplate where appropriate.
+
+4. Keep the **checkout flow** in `features/checkout` — one shared flow for shop and kasse.
+
+5. API calls go through `HttpClient` to `/api/*` (proxied to Express in dev).
+
+6. Do not use deprecated patterns (NgModules for new features, `*ngIf`/`*ngFor` in new templates unless matching existing code).
