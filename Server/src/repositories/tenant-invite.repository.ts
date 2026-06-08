@@ -8,7 +8,7 @@ export interface ITenantInviteRepository {
   create(tenantId: string, email: string): Promise<TenantInvite>;
   findByToken(token: string): Promise<
     | (TenantInvite & {
-        tenant: { id: string; name: string; slug: string };
+        tenant: { id: string; name: string; slug: string; lifecycleStatus: string };
       })
     | null
   >;
@@ -42,7 +42,7 @@ export class TenantInviteRepository implements ITenantInviteRepository {
     return prisma.tenantInvite.findUnique({
       where: { token },
       include: {
-        tenant: { select: { id: true, name: true, slug: true } },
+        tenant: { select: { id: true, name: true, slug: true, lifecycleStatus: true } },
       },
     });
   }

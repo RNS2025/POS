@@ -1,6 +1,8 @@
 import type { Response } from 'express';
 import type { AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../middleware/async-handler.js';
+import { platformExportService } from '../services/platform-export.service.js';
+import { platformLifecycleService } from '../services/platform-lifecycle.service.js';
 import { platformService } from '../services/platform.service.js';
 
 export const listMerchantsController = asyncHandler(
@@ -65,3 +67,24 @@ export const listMerchantOrdersController = asyncHandler(
     res.json(result);
   },
 );
+
+export const exportMerchantDataController = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { stream, filename } = await platformExportService.createExportZip(
+      req.auth!,
+      req.params.tenantId!,
+    );
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    stream.pipe(res);
+  },
+);
+
+export const archiveMerchantController = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const result = await platformLifecycleService.archiveMerchant(
+    req.auth!,
+    req.params.tenantId!,
+    req.body,
+  );
+  res.json(result);
+});

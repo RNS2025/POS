@@ -16,7 +16,7 @@ export function resolveTenantFromSlug(paramName = 'tenantSlug') {
     }
 
     const tenant = await tenantRepository.findBySlug(slug);
-    if (!tenant) {
+    if (!tenant || tenant.lifecycleStatus === 'archived') {
       next(new AppError(`We couldn't find a shop at "${slug}".`, 404));
       return;
     }

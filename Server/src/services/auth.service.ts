@@ -101,7 +101,7 @@ export class AuthService implements IAuthService {
 
     if (data.tenantSlug) {
       const tenant = await this.tenants.findBySlug(data.tenantSlug);
-      if (!tenant) {
+      if (!tenant || tenant.lifecycleStatus === 'archived') {
         throw new AppError(
           `We couldn't find a shop at "${data.tenantSlug}". Check the shop web address — it is the part after payment.rns-apps.dk/ (e.g. acme-bakery).`,
           401,
@@ -109,7 +109,7 @@ export class AuthService implements IAuthService {
       }
 
       const user = await this.users.findByEmailAndTenant(data.email.toLowerCase(), tenant.id);
-      if (!user || user.role !== 'admin') {
+      if (!user || user.role !== 'admin' || !user.isActive) {
         throw new AppError(
           `No admin account with email ${data.email} for shop "${data.tenantSlug}". Check the email or create a shop first.`,
           401,
@@ -185,6 +185,9 @@ export class AuthService implements IAuthService {
     }
     if (invite.expiresAt.getTime() < Date.now()) {
       throw new AppError('This invite has expired. Ask RNS support for a new link.', 410);
+    }
+    if (invite.tenant.lifecycleStatus === 'archived') {
+      throw new AppError('This shop has been archived and is no longer accepting new users.', 410);
     }
 
     const existing = await this.users.findByEmailAndTenant(invite.email, invite.tenantId);

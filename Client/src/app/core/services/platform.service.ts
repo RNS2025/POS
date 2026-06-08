@@ -1,6 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import type {
+  ArchivePlatformMerchantRequest,
+  ArchivePlatformMerchantResponse,
   CreatePlatformMerchantRequest,
   CreatePlatformMerchantResponse,
   CreatePlatformNoteRequest,
@@ -88,5 +90,18 @@ export class PlatformService {
 
   addNote(tenantId: string, body: CreatePlatformNoteRequest) {
     return this.http.post<PlatformMerchantNote>(`/api/v1/platform/merchants/${tenantId}/notes`, body);
+  }
+
+  exportMerchantData(tenantId: string) {
+    return this.http.get(`/api/v1/platform/merchants/${tenantId}/export-data`, {
+      responseType: 'blob',
+    });
+  }
+
+  archiveMerchant(tenantId: string, body: ArchivePlatformMerchantRequest) {
+    return this.http.post<ArchivePlatformMerchantResponse>(
+      `/api/v1/platform/merchants/${tenantId}/archive`,
+      body,
+    );
   }
 }

@@ -9,7 +9,8 @@
 } @else if (merchant(); as m) {
   <section>
     <h2>{{ m.name }}</h2>
-    <p>Status: {{ statusLabel(m.status) }}</p>
+    <p>Lifecycle: {{ lifecycleLabel(m.lifecycleStatus) }}@if (m.archivedAt) { — archived {{ m.archivedAt | date: 'medium' }}}</p>
+    <p>Quickpay status: {{ statusLabel(m.status) }}</p>
     <p>Shop link: payment.rns-apps.dk/{{ m.slug }}</p>
     <p>Registered: {{ m.createdAt | date: 'medium' }}</p>
     <p>Orders: {{ m.orderCount }}@if (m.lastOrderAt) { — last order {{ m.lastOrderAt | date: 'medium' }}}</p>
@@ -48,6 +49,36 @@
   </section>
 
   <section>
+    <h2>Danger zone</h2>
+    <p>Export all merchant data (ZIP) before archiving. Archive stops shop URLs, logins, and payment keys.</p>
+    <p>
+      <button type="button" (click)="exportData()" [disabled]="exporting()">
+        @if (exporting()) { Exporting… } @else { Export all data }
+      </button>
+      @if (m.lifecycleStatus === 'active') {
+        <button type="button" (click)="openArchiveDialog()" [disabled]="archiving()">Archive merchant</button>
+      }
+    </p>
+  </section>
+
+  <confirm-dialog
+    [open]="confirmArchiveOpen()"
+    title="Archive merchant"
+    message="This stops the shop, deactivates users, removes payment keys, and invalidates invites. Type the shop name to confirm."
+    confirmLabel="Archive merchant"
+    [confirmLoading]="archiving()"
+    (confirmed)="archiveMerchant()"
+    (cancelled)="cancelArchive()"
+  >
+    <p>
+      <label>
+        Shop name
+        <input name="archiveConfirmName" [(ngModel)]="archiveConfirmName" required />
+      </label>
+    </p>
+  </confirm-dialog>
+
+  <section>
     <h2>Quickpay setup</h2>
     <p>
       Keys configured:
@@ -71,6 +102,9 @@
       <p>Last tested: {{ m.lastPingAt | date: 'medium' }}</p>
     }
 
+    @if (m.lifecycleStatus === 'archived') {
+      <p>This merchant is archived. Quickpay keys were removed.</p>
+    } @else {
     <form (ngSubmit)="saveQuickpay()">
       <p>Enter keys from the merchant&apos;s Quickpay Manager. Saved secrets are never shown here.</p>
       <p>
@@ -98,6 +132,7 @@
         </button>
       </p>
     </form>
+    }
   </section>
 
   <section>

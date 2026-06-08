@@ -14,6 +14,8 @@ model Tenant {
   id                   String                 @id @default(uuid()) @db.Uuid
   name                 String
   slug                 String                 @unique
+  lifecycleStatus      String                 @default("active") @map("lifecycle_status")
+  archivedAt           DateTime?              @map("archived_at")
   quickpayConnectedAt  DateTime?              @map("quickpay_connected_at")
   verifoneConnectedAt  DateTime?              @map("verifone_connected_at")
   createdAt            DateTime               @default(now()) @map("created_at")
@@ -22,6 +24,7 @@ model Tenant {
   quickpayConfig       TenantQuickpayConfig?
   verifoneConfig       TenantVerifoneConfig?
   platformNotes        PlatformMerchantNote[]
+  platformAuditLogs    PlatformAuditLog[]
   invites              TenantInvite[]
   orders               Order[]
   kasser               Kasse[]
@@ -74,9 +77,10 @@ model User {
   isActive      Boolean                @default(true) @map("is_active")
   createdAt     DateTime               @default(now()) @map("created_at")
   updatedAt     DateTime               @updatedAt @map("updated_at")
-  tenant        Tenant?                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  platformNotes PlatformMerchantNote[] @relation("PlatformNoteAuthor")
-  staffOrders   Order[]                @relation("OrderStaff")
+  tenant              Tenant?                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  platformNotes       PlatformMerchantNote[] @relation("PlatformNoteAuthor")
+  platformAuditLogs   PlatformAuditLog[]     @relation("PlatformAuditActor")
+  staffOrders         Order[]                @relation("OrderStaff")
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -94,6 +98,19 @@ model PlatformMerchantNote {
 
   @@index([tenantId])
   @@map("platform_merchant_notes")
+}
+
+model PlatformAuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  actorId   String   @map("actor_id") @db.Uuid
+  action    String
+  createdAt DateTime @default(now()) @map("created_at")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actor     User     @relation("PlatformAuditActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("platform_audit_logs")
 }
 
 model TenantInvite {

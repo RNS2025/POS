@@ -2,6 +2,8 @@ import type { MerchantStatus } from '../../types/merchant-status.js';
 import type { Tenant, TenantQuickpayConfig, User } from '../../generated/prisma/client.js';
 
 type TenantWithRelations = Tenant & {
+  lifecycleStatus?: string;
+  archivedAt?: Date | null;
   quickpayConfig: TenantQuickpayConfig | null;
   users: Pick<User, 'email'>[];
   _count?: { orders: number };
@@ -41,6 +43,8 @@ export function toMerchantSummary(tenant: TenantWithRelations): {
   id: string;
   name: string;
   slug: string;
+  lifecycleStatus: 'active' | 'archived';
+  archivedAt: string | null;
   status: MerchantStatus;
   createdAt: string;
   quickpayConnectedAt: string | null;
@@ -58,6 +62,8 @@ export function toMerchantSummary(tenant: TenantWithRelations): {
     id: tenant.id,
     name: tenant.name,
     slug: tenant.slug,
+    lifecycleStatus: tenant.lifecycleStatus === 'archived' ? 'archived' : 'active',
+    archivedAt: tenant.archivedAt?.toISOString() ?? null,
     status: deriveMerchantStatus(tenant),
     createdAt: tenant.createdAt.toISOString(),
     quickpayConnectedAt: tenant.quickpayConnectedAt?.toISOString() ?? null,

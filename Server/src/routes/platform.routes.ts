@@ -1,7 +1,9 @@
 import type { Express } from 'express';
 import {
   addMerchantNoteController,
+  archiveMerchantController,
   createMerchantController,
+  exportMerchantDataController,
   exportMerchantsController,
   getDashboardStatsController,
   getMerchantController,
@@ -74,5 +76,19 @@ export function registerPlatformRoutes(app: Express) {
     requireAuth,
     requirePlatformAdmin,
     addMerchantNoteController,
+  );
+
+  app.get(
+    '/api/v1/platform/merchants/:tenantId/export-data',
+    requireAuth,
+    requirePlatformAdmin,
+    exportMerchantDataController,
+  );
+
+  app.post(
+    '/api/v1/platform/merchants/:tenantId/archive',
+    requireAuth,
+    requirePlatformAdmin,
+    archiveMerchantController,
   );
 }

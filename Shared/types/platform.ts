@@ -12,10 +12,14 @@ export type MerchantStatus =
   | 'live'
   | 'attention';
 
+export type TenantLifecycleStatus = 'active' | 'archived';
+
 export interface PlatformMerchantSummary {
   id: string;
   name: string;
   slug: string;
+  lifecycleStatus: TenantLifecycleStatus;
+  archivedAt: string | null;
   status: MerchantStatus;
   createdAt: string;
   quickpayConnectedAt: string | null;
@@ -96,6 +100,14 @@ export interface PlatformMerchantListQuery {
 
 export interface CreatePlatformNoteRequest {
   body: string;
+}
+
+export interface ArchivePlatformMerchantRequest {
+  confirmName: string;
+}
+
+export interface ArchivePlatformMerchantResponse {
+  merchant: PlatformMerchantDetail;
 }
 
 /** Platform write-only — saved keys are never returned. */

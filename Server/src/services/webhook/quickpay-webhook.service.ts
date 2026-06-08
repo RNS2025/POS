@@ -10,6 +10,7 @@ import type { IOrderRepository } from '../../repositories/order.repository.js';
 import { orderRepository } from '../../repositories/order.repository.js';
 import type { ITenantQuickpayConfigRepository } from '../../repositories/tenant-quickpay-config.repository.js';
 import { tenantQuickpayConfigRepository } from '../../repositories/tenant-quickpay-config.repository.js';
+import { tenantRepository } from '../../repositories/tenant.repository.js';
 import { verifyQuickpayChecksum } from '../quickpay/quickpay-checksum.js';
 import {
   mapQuickpayToStatuses,
@@ -26,6 +27,11 @@ export class QuickpayWebhookService {
   ) {}
 
   async handleCallback(tenantId: string, rawBody: string, checksumHeader: string | undefined) {
+    const tenant = await tenantRepository.findById(tenantId);
+    if (!tenant || tenant.lifecycleStatus === 'archived') {
+      throw new AppError('Quickpay is not configured for this shop.', 404);
+    }
+
     const config = await this.quickpayConfigs.findByTenantId(tenantId);
     if (!config) {
       throw new AppError('Quickpay is not configured for this shop.', 404);

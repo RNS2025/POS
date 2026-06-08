@@ -6,11 +6,12 @@ import type { PlatformMerchantDetail, PlatformOrderSummary } from '@shared/platf
 import { LogoutLink } from '../../../core/components/logout-link';
 import { PlatformService } from '../../../core/services/platform.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
-import { merchantStatusLabel } from '../../../core/utils/merchant-status';
+import { merchantStatusLabel, tenantLifecycleLabel } from '../../../core/utils/merchant-status';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-platform-merchant-detail',
-  imports: [FormsModule, RouterLink, LogoutLink, DatePipe, CurrencyPipe],
+  imports: [FormsModule, RouterLink, LogoutLink, DatePipe, CurrencyPipe, ConfirmDialogComponent],
   templateUrl: './merchant-detail.page.html',
 })
 export class MerchantDetailPage implements OnInit {
@@ -24,12 +25,17 @@ export class MerchantDetailPage implements OnInit {
   protected readonly pinging = signal(false);
   protected readonly savingQuickpay = signal(false);
   protected readonly savingNote = signal(false);
+  protected readonly exporting = signal(false);
+  protected readonly archiving = signal(false);
+  protected readonly confirmArchiveOpen = signal(false);
 
   protected noteBody = '';
+  protected archiveConfirmName = '';
   protected quickpayMerchantId = '';
   protected quickpayPrivateKey = '';
   protected quickpayApiKey = '';
   protected readonly statusLabel = merchantStatusLabel;
+  protected readonly lifecycleLabel = tenantLifecycleLabel;
 
   private tenantId = '';
 
@@ -99,6 +105,62 @@ export class MerchantDetailPage implements OnInit {
       error: (err) => {
         this.error.set(apiErrorMessage(err, 'Quickpay test failed. Check the merchant keys.'));
         this.pinging.set(false);
+      },
+    });
+  }
+
+  protected exportData(): void {
+    this.exporting.set(true);
+    this.error.set('');
+
+    this.platform.exportMerchantData(this.tenantId).subscribe({
+      next: (blob) => {
+        const m = this.merchant();
+        const slug = m?.slug ?? 'merchant';
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `${slug}-export.zip`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+        this.exporting.set(false);
+      },
+      error: (err) => {
+        this.error.set(apiErrorMessage(err, 'Could not export merchant data.'));
+        this.exporting.set(false);
+      },
+    });
+  }
+
+  protected openArchiveDialog(): void {
+    this.archiveConfirmName = '';
+    this.confirmArchiveOpen.set(true);
+  }
+
+  protected cancelArchive(): void {
+    this.confirmArchiveOpen.set(false);
+    this.archiveConfirmName = '';
+  }
+
+  protected archiveMerchant(): void {
+    const m = this.merchant();
+    if (!m) {
+      return;
+    }
+
+    this.archiving.set(true);
+    this.error.set('');
+
+    this.platform.archiveMerchant(this.tenantId, { confirmName: this.archiveConfirmName.trim() }).subscribe({
+      next: (res) => {
+        this.merchant.set(res.merchant);
+        this.confirmArchiveOpen.set(false);
+        this.archiveConfirmName = '';
+        this.archiving.set(false);
+      },
+      error: (err) => {
+        this.error.set(apiErrorMessage(err, 'Could not archive this merchant.'));
+        this.archiving.set(false);
       },
     });
   }

@@ -14,10 +14,14 @@ export class KassePinService {
   constructor(private readonly staff: IStaffRepository = staffRepository) {}
 
   async login(
-    tenant: { id: string; slug: string },
+    tenant: { id: string; slug: string; lifecycleStatus?: string },
     kasse: Kasse,
     input: unknown,
   ) {
+    if (tenant.lifecycleStatus === 'archived' || !kasse.isActive) {
+      throw new AppError('This register is not available.', 404);
+    }
+
     const data = pinSchema.parse(input);
     const staffUsers = await this.staff.listActiveWithPin(tenant.id);
 

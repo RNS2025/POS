@@ -158,6 +158,8 @@ export class PlatformService {
         id: tenant.id,
         name: tenant.name,
         slug: tenant.slug,
+        lifecycleStatus: 'active' as const,
+        archivedAt: null,
         status: 'registered' as const,
         createdAt: tenant.createdAt.toISOString(),
         quickpayConnectedAt: null,
