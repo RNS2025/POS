@@ -6,6 +6,7 @@ databases:
 services:
   - type: web
     name: pos-api
+    region: frankfurt
     runtime: node
     rootDir: Server
     plan: free
