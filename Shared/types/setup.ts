@@ -1,12 +1,15 @@
 export interface SetupQuickpayRequest {
   merchantId: string;
-  privateKey: string;
-  apiKey: string;
+  /** Omit or leave empty to keep the saved key and only re-test / update merchant id. */
+  privateKey?: string;
+  /** Omit or leave empty to keep the saved key and only re-test / update merchant id. */
+  apiKey?: string;
 }
 
 export interface SetupVerifoneRequest {
   userUid: string;
-  apiKey: string;
+  /** Omit or leave empty to keep the saved API key. */
+  apiKey?: string;
   poiId: string;
   saleId: string;
   useSimulator?: boolean;

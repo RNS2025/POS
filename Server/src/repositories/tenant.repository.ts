@@ -32,7 +32,18 @@ export class TenantRepository implements ITenantRepository {
   }
 
   create(data: { name: string; slug: string }) {
-    return prisma.tenant.create({ data });
+    return prisma.$transaction(async (tx) => {
+      const tenant = await tx.tenant.create({ data });
+      await tx.kasse.create({
+        data: {
+          tenantId: tenant.id,
+          type: 'kiosk',
+          name: 'Customer kiosk',
+          slug: 'customer',
+        },
+      });
+      return tenant;
+    });
   }
 
   updateQuickpayConnectedAt(tenantId: string, at: Date | null) {

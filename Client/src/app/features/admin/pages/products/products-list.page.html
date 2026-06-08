@@ -1,0 +1,57 @@
+<div class="page-title">
+  <h1>Products</h1>
+</div>
+
+<div class="wf-toolbar">
+  <a class="wf-btn primary" [routerLink]="['new']">New product</a>
+</div>
+
+<async-shell
+  [loading]="loading() && items().length === 0"
+  [error]="error()"
+  [empty]="!loading() && items().length === 0"
+  emptyMessage="No products yet."
+>
+  <table class="wf-table">
+    <thead>
+      <tr>
+        <th>Image</th>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Price</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of items(); track p.id) {
+        <tr>
+          <td>
+            @if (p.imageUrl) {
+              <img class="wf-thumb" [src]="p.imageUrl" alt="" />
+            } @else {
+              <span class="wf-thumb empty">—</span>
+            }
+          </td>
+          <td>
+            <a [routerLink]="[p.id]">{{ p.name }}</a>
+          </td>
+          <td>{{ p.categoryName ?? '—' }}</td>
+          <td>{{ p.priceOre / 100 | currency: 'DKK' }}</td>
+          <td>
+            <span class="wf-badge" [class.live]="p.isActive" [class.inactive]="!p.isActive">
+              {{ p.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <pos-paginator
+    [page]="page()"
+    [total]="total()"
+    [limit]="limit"
+    (prev)="prevPage()"
+    (next)="nextPage()"
+  />
+</async-shell>

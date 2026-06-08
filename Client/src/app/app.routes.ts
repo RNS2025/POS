@@ -6,6 +6,13 @@ import { verifoneConnectedGuard } from './core/guards/verifone-connected.guard';
 import { OrderDetailPage } from './features/admin/pages/orders/order-detail.page';
 import { OrdersListPage } from './features/admin/pages/orders/orders-list.page';
 import { SetupPage } from './features/admin/pages/setup.page';
+import { CategoriesListPage } from './features/admin/pages/categories/categories-list.page';
+import { CategoryFormPage } from './features/admin/pages/categories/category-form.page';
+import { KasserListPage } from './features/admin/pages/kasser/kasser-list.page';
+import { KasseFormPage } from './features/admin/pages/kasser/kasse-form.page';
+import { ProductsListPage } from './features/admin/pages/products/products-list.page';
+import { ProductFormPage } from './features/admin/pages/products/product-form.page';
+import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.component';
 import { CheckoutCancelPage } from './features/checkout/pages/checkout-cancel.page';
 import { CheckoutSuccessPage } from './features/checkout/pages/checkout-success.page';
 import { CheckoutPage } from './features/checkout/pages/checkout.page';
@@ -49,19 +56,24 @@ export const routes: Routes = [
     canActivate: [authGuard, tenantSlugGuard, verifoneConnectedGuard],
   },
   {
-    path: ':tenantSlug/admin/orders',
-    component: OrdersListPage,
+    path: ':tenantSlug/admin',
+    component: AdminLayoutComponent,
     canActivate: [authGuard, tenantSlugGuard],
-  },
-  {
-    path: ':tenantSlug/admin/orders/:orderId',
-    component: OrderDetailPage,
-    canActivate: [authGuard, tenantSlugGuard],
-  },
-  {
-    path: ':tenantSlug/admin/setup',
-    component: SetupPage,
-    canActivate: [authGuard, tenantSlugGuard],
+    children: [
+      { path: 'products', component: ProductsListPage },
+      { path: 'products/new', component: ProductFormPage },
+      { path: 'products/:productId', component: ProductFormPage },
+      { path: 'categories', component: CategoriesListPage },
+      { path: 'categories/new', component: CategoryFormPage },
+      { path: 'categories/:categoryId', component: CategoryFormPage },
+      { path: 'kasser', component: KasserListPage },
+      { path: 'kasser/new', component: KasseFormPage },
+      { path: 'kasser/:kasseId', component: KasseFormPage },
+      { path: 'orders', component: OrdersListPage },
+      { path: 'orders/:orderId', component: OrderDetailPage },
+      { path: 'setup', component: SetupPage },
+      { path: '', redirectTo: 'products', pathMatch: 'full' },
+    ],
   },
   { path: ':tenantSlug/checkout/success', component: CheckoutSuccessPage },
   { path: ':tenantSlug/checkout/cancel', component: CheckoutCancelPage },

@@ -1,247 +1,163 @@
-<h1>Shop setup</h1>
+<div class="page-title">
+  <h1>Shop setup</h1>
+  <p>Connect Quickpay for online payments and Verifone for in-store terminal.</p>
+</div>
 
-<p>
-  <a [routerLink]="['/', tenantSlug, 'admin', 'orders']">Orders</a>
+<div class="wf-toolbar">
+  <a class="wf-btn ghost" [routerLink]="['/', tenantSlug, 'admin', 'orders']">Orders</a>
   @if (setup()?.quickpayConnected) {
-    · <a [routerLink]="['/', tenantSlug, 'checkout']">Test online checkout</a>
+    <a class="wf-btn ghost" [routerLink]="['/', tenantSlug, 'checkout']">Test online checkout</a>
   }
   @if (setup()?.verifoneConnected) {
-    · <a [routerLink]="['/', tenantSlug, 'kasse']">Open kasse</a>
+    <a class="wf-btn ghost" [routerLink]="['/', tenantSlug, 'kasse']">Open kasse</a>
   }
-</p>
-
-<app-logout-link />
+</div>
 
 @if (loading()) {
-
-  <p>Loading…</p>
-
+  <p class="wf-loading">Loading…</p>
 } @else if (setup(); as s) {
-
-  <section>
-
+  <section class="wf-panel">
     <h2>What we need from you</h2>
-
-    <p>{{ s.shopName }}</p>
-
-    <p>Your shop link: payment.rns-apps.dk/{{ s.slug }}</p>
-
+    <p><strong>{{ s.shopName }}</strong></p>
+    <p class="wf-hint">Your shop link: payment.rns-apps.dk/{{ s.slug }}</p>
     <p>
-
-      Quickpay connection:
-
+      Quickpay:
       @if (s.quickpayConnected) {
-
-        Connected — ready for test payments
-
+        <span class="wf-badge live">Connected</span>
       } @else {
-
-        Not connected yet
-
+        <span class="wf-badge pending">Not connected</span>
       }
-
     </p>
-
     @if (s.lastPingError && !error()) {
-
-      <p>Quickpay connection problem: {{ s.lastPingError }}</p>
-
+      <p class="wf-alert error">Quickpay connection problem: {{ s.lastPingError }}</p>
     }
 
-
-
-    <form (ngSubmit)="saveQuickpay()">
-
-      <p>Copy these from Quickpay Manager → Settings → Integration.</p>
-
-      <p>
-
-        <label>
-
-          Merchant number
-
-          <input name="merchantId" [(ngModel)]="merchantId" required />
-
-        </label>
-
-      </p>
-
-      <p>
-
-        <label>
-
-          Private key
-
-          <input name="privateKey" type="password" [(ngModel)]="privateKey" [placeholder]="s.quickpay?.privateKeyMasked ?? 'Paste from Quickpay'" />
-
-        </label>
-
-      </p>
-
-      <p>
-
-        <label>
-
-          Payment window key
-
-          <input name="apiKey" type="password" [(ngModel)]="apiKey" [placeholder]="s.quickpay?.apiKeyMasked ?? 'Use the Payment Window user key'" />
-
-        </label>
-
-      </p>
-
+    <form class="wf-form" (ngSubmit)="saveQuickpay()">
+      <p class="wf-hint">Copy these from Quickpay Manager → Settings → Integration.</p>
+      <label>
+        Merchant number
+        <input name="merchantId" [(ngModel)]="merchantId" required />
+      </label>
+      <label>
+        Private key
+        <input
+          name="privateKey"
+          type="password"
+          [(ngModel)]="privateKey"
+          [placeholder]="s.quickpay ? 'Saved (' + s.quickpay.privateKeyMasked + ') — leave blank to re-test' : 'Paste from Quickpay'"
+          autocomplete="off"
+        />
+      </label>
+      <label>
+        Payment window key
+        <input
+          name="apiKey"
+          type="password"
+          [(ngModel)]="apiKey"
+          [placeholder]="s.quickpay ? 'Saved (' + s.quickpay.apiKeyMasked + ') — leave blank to re-test' : 'Use the Payment Window user key'"
+          autocomplete="off"
+        />
+      </label>
       @if (error()) {
-
-        <p>{{ error() }}</p>
-
+        <p class="wf-alert error">{{ error() }}</p>
       }
-
-      <p>
-
-        <button type="submit" [disabled]="saving()">Save and test connection</button>
-
-      </p>
-
+      <div class="wf-form-actions">
+        <button type="submit" class="wf-btn primary" [disabled]="saving()">
+          {{
+            saving()
+              ? 'Testing…'
+              : s.quickpay
+                ? 'Test connection'
+                : 'Save and test connection'
+          }}
+        </button>
+      </div>
     </form>
-
   </section>
 
-
-
-  <section>
-
+  <section class="wf-panel">
     <h2>In-store terminal (Verifone)</h2>
-
     <p>
-
-      Verifone connection:
-
+      Verifone:
       @if (s.verifoneConnected) {
-
-        Connected — kasse ready
-
+        <span class="wf-badge live">Connected</span>
       } @else {
-
-        Not connected yet
-
+        <span class="wf-badge pending">Not connected</span>
       }
-
     </p>
-
     @if (s.verifoneLastPingError && !error()) {
-
-      <p>Verifone problem: {{ s.verifoneLastPingError }}</p>
-
+      <p class="wf-alert error">Verifone problem: {{ s.verifoneLastPingError }}</p>
     }
-
     @if (s.verifoneConnected) {
-
-      <p><a [routerLink]="['/', tenantSlug, 'kasse']">Open kasse</a></p>
-
+      <p><a class="wf-btn ghost" [routerLink]="['/', tenantSlug, 'kasse']">Open kasse</a></p>
     }
 
-    <details>
+    <details class="wf-hint">
       <summary>Verifone test guide</summary>
       <p>
         Use simulator mode for local testing. See the
-        <a href="https://docs.verifone.com/pos-cloud/pos-cloud-guide/readme-1/testing/testing-integration" target="_blank" rel="noopener">Verifone testing integration guide</a>
+        <a
+          href="https://docs.verifone.com/pos-cloud/pos-cloud-guide/readme-1/testing/testing-integration"
+          target="_blank"
+          rel="noopener"
+        >
+          Verifone testing integration guide
+        </a>
         for sale, refund, reversal, and abort scenarios.
       </p>
     </details>
 
-    <form (ngSubmit)="saveVerifone()">
-
-      <p>Copy these from Verifone Central. Use simulator mode for local testing without a physical terminal.</p>
-
-      <p>
-
-        <label>
-
-          User UID
-
-          <input name="verifoneUserUid" [(ngModel)]="verifoneUserUid" required />
-
-        </label>
-
+    <form class="wf-form" (ngSubmit)="saveVerifone()">
+      <p class="wf-hint">
+        Copy these from Verifone Central. Use simulator mode for local testing without a physical terminal.
       </p>
-
-      <p>
-
-        <label>
-
-          API key
-
-          <input name="verifoneApiKey" type="password" [(ngModel)]="verifoneApiKey" [placeholder]="s.verifone?.apiKeyMasked ?? 'From Verifone Central'" />
-
-        </label>
-
-      </p>
-
-      <p>
-
-        <label>
-
-          Terminal ID (POIID)
-
-          <input name="verifonePoiId" [(ngModel)]="verifonePoiId" required />
-
-        </label>
-
-      </p>
-
-      <p>
-
-        <label>
-
-          Sale ID
-
-          <input name="verifoneSaleId" [(ngModel)]="verifoneSaleId" required />
-
-        </label>
-
-      </p>
-
-      <p>
-
-        <label>
-
-          <input type="checkbox" name="verifoneUseSimulator" [(ngModel)]="verifoneUseSimulator" />
-
-          Use Verifone simulator (recommended for testing)
-
-        </label>
-
-      </p>
-
-      <p>
-
-        <button type="submit" [disabled]="savingVerifone()">Save and test Verifone</button>
-
-      </p>
-
+      <label>
+        User UID
+        <input name="verifoneUserUid" [(ngModel)]="verifoneUserUid" required />
+      </label>
+      <label>
+        API key
+        <input
+          name="verifoneApiKey"
+          type="password"
+          [(ngModel)]="verifoneApiKey"
+          [placeholder]="s.verifone ? 'Saved (' + s.verifone.apiKeyMasked + ') — leave blank to re-test' : 'From Verifone Central'"
+          autocomplete="off"
+        />
+      </label>
+      <label>
+        Terminal ID (POIID)
+        <input name="verifonePoiId" [(ngModel)]="verifonePoiId" required />
+      </label>
+      <label>
+        Sale ID
+        <input name="verifoneSaleId" [(ngModel)]="verifoneSaleId" required />
+      </label>
+      <label>
+        <input type="checkbox" name="verifoneUseSimulator" [(ngModel)]="verifoneUseSimulator" />
+        Use Verifone simulator (recommended for testing)
+      </label>
+      <div class="wf-form-actions">
+        <button type="submit" class="wf-btn primary" [disabled]="savingVerifone()">
+          {{
+            savingVerifone()
+              ? 'Testing…'
+              : s.verifone
+                ? 'Test Verifone connection'
+                : 'Save and test Verifone'
+          }}
+        </button>
+      </div>
     </form>
-
   </section>
 
-
-
-  <section>
-
-    <h2>Setup guides — we help you with these</h2>
-
+  <section class="wf-panel">
+    <h2>Setup guides</h2>
     <ol>
-
       @for (guide of s.guides; track guide.title) {
-
         <li>{{ guide.title }}</li>
-
       }
-
     </ol>
-
-    <p>Need help? Contact RNS-Apps support.</p>
-
+    <p class="wf-hint">Need help? Contact RNS-Apps support.</p>
   </section>
-
 }
-

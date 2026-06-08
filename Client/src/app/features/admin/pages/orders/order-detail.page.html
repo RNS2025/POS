@@ -1,13 +1,13 @@
-<p><a [routerLink]="['/', tenantSlug, 'admin', 'orders']">← All orders</a></p>
+<p><a class="wf-btn ghost" [routerLink]="['/', tenantSlug, 'admin', 'orders']">← All orders</a></p>
 
-<h1>Order</h1>
-
-<app-logout-link />
+<div class="page-title">
+  <h1>Order</h1>
+</div>
 
 @if (loading() && !order()) {
-  <p>Loading…</p>
+  <p class="wf-loading">Loading…</p>
 } @else if (order(); as o) {
-  <section>
+  <section class="wf-panel">
     <p><strong>Ref:</strong> {{ o.quickpayOrderRef }}</p>
     <p><strong>Channel:</strong> {{ o.channel === 'terminal' ? 'In-store' : 'Online' }}</p>
     <p><strong>Amount:</strong> {{ o.amountOre / 100 | currency: o.currency }}</p>
@@ -31,73 +31,49 @@
   }
 
   @if (showPaymentLink()) {
-    <section>
+    <section class="wf-panel">
       <h2>Payment link</h2>
       <p>Send this link to the customer so they can pay online.</p>
       <p><a [href]="displayPaymentUrl()" target="_blank" rel="noopener">Open payment page</a></p>
-      <p><code>{{ displayPaymentUrl() }}</code></p>
-      <p>
-        <button type="button" (click)="copyPaymentLink()">Copy link</button>
-      </p>
+      <copy-field [value]="displayPaymentUrl()" ariaLabel="Payment link" />
     </section>
   }
 
-  <section>
+  <section class="wf-panel">
     <h2>Actions</h2>
     @if (canSyncStatus()) {
       <p>
-        <button type="button" (click)="syncStatus()" [disabled]="actionLoading()">
+        <pos-button type="button" [loading]="actionLoading()" (pressed)="syncStatus()">
           Refresh status from Quickpay
-        </button>
+        </pos-button>
         <span> — Use when webhooks cannot reach your machine (local dev).</span>
       </p>
     }
     @if (hasAction('retry')) {
       <p>
-        <button type="button" (click)="retry()" [disabled]="actionLoading()">
+        <pos-button type="button" [loading]="actionLoading()" (pressed)="retry()">
           {{ showPaymentLink() ? 'Refresh payment link' : 'Retry payment' }}
-        </button>
+        </pos-button>
         @if (o.actionHints.retry) {
           <span> — {{ o.actionHints.retry }}</span>
         }
       </p>
     }
     @if (hasAction('refund')) {
-      @if (!showRefundForm) {
-        <p>
-          <button type="button" (click)="showRefundForm = true" [disabled]="actionLoading()">
-            Refund
-          </button>
-          @if (o.actionHints.refund) {
-            <span> — {{ o.actionHints.refund }}</span>
-          }
-        </p>
-      } @else {
-        <form (ngSubmit)="refund()">
-          <p>
-            <label>
-              Refund amount (DKK)
-              <input
-                type="number"
-                name="refundAmountDkk"
-                [(ngModel)]="refundAmountDkk"
-                [max]="o.refundableAmountOre / 100"
-                min="0.01"
-                step="0.01"
-                required
-              />
-            </label>
-          </p>
-          <p>
-            <button type="submit" [disabled]="actionLoading()">Confirm refund</button>
-            <button type="button" (click)="showRefundForm = false">Cancel</button>
-          </p>
-        </form>
-      }
+      <p>
+        <pos-button type="button" [loading]="actionLoading()" (pressed)="refundDialogOpen.set(true)">
+          Refund
+        </pos-button>
+        @if (o.actionHints.refund) {
+          <span> — {{ o.actionHints.refund }}</span>
+        }
+      </p>
     }
     @if (hasAction('void')) {
       <p>
-        <button type="button" (click)="voidSale()" [disabled]="actionLoading()">Void sale</button>
+        <pos-button type="button" [loading]="actionLoading()" (pressed)="voidDialogOpen.set(true)">
+          Void sale
+        </pos-button>
         @if (o.actionHints.void) {
           <span> — {{ o.actionHints.void }}</span>
         }
@@ -105,7 +81,9 @@
     }
     @if (hasAction('abort')) {
       <p>
-        <button type="button" (click)="abortSale()" [disabled]="actionLoading()">Cancel on terminal</button>
+        <pos-button type="button" [loading]="actionLoading()" (pressed)="abortDialogOpen.set(true)">
+          Cancel on terminal
+        </pos-button>
         @if (o.actionHints.abort) {
           <span> — {{ o.actionHints.abort }}</span>
         }
@@ -139,6 +117,52 @@
   @if (success()) {
     <p>{{ success() }}</p>
   }
+
+  <confirm-dialog
+    [open]="refundDialogOpen()"
+    title="Refund"
+    message="Enter amount to refund."
+    confirmLabel="Confirm refund"
+    confirmVariant="primary"
+    [confirmLoading]="actionLoading()"
+    (confirmed)="refund()"
+    (cancelled)="refundDialogOpen.set(false)"
+  >
+    <p>
+      <label>
+        Refund amount (DKK)
+        <input
+          type="number"
+          name="refundAmountDkk"
+          [(ngModel)]="refundAmountDkk"
+          [max]="o.refundableAmountOre / 100"
+          min="0.01"
+          step="0.01"
+          required
+        />
+      </label>
+    </p>
+  </confirm-dialog>
+
+  <confirm-dialog
+    [open]="voidDialogOpen()"
+    title="Void sale"
+    message="Void this sale on the terminal? This cannot be undone."
+    confirmLabel="Void sale"
+    [confirmLoading]="actionLoading()"
+    (confirmed)="voidSale()"
+    (cancelled)="voidDialogOpen.set(false)"
+  />
+
+  <confirm-dialog
+    [open]="abortDialogOpen()"
+    title="Cancel on terminal"
+    message="Cancel the in-progress terminal payment?"
+    confirmLabel="Cancel payment"
+    [confirmLoading]="actionLoading()"
+    (confirmed)="abortSale()"
+    (cancelled)="abortDialogOpen.set(false)"
+  />
 }
 
 @if (error()) {

@@ -1,0 +1,127 @@
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import type { KasseType } from '@shared/catalog';
+import { KasserService } from '../../../../core/services/kasser.service';
+import { apiErrorMessage } from '../../../../core/utils/api-error';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { CopyFieldComponent } from '../../../../shared/components/copy-field/copy-field.component';
+import { FormActionsComponent } from '../../../../shared/components/form-actions/form-actions.component';
+
+@Component({
+  selector: 'app-kasse-form-page',
+  imports: [FormsModule, FormActionsComponent, CopyFieldComponent, ConfirmDialogComponent],
+  templateUrl: './kasse-form.page.html',
+})
+export class KasseFormPage implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly kasserApi = inject(KasserService);
+
+  protected tenantSlug = '';
+  protected kasseId = '';
+  protected isEdit = false;
+
+  protected type: KasseType = 'kiosk';
+  protected name = '';
+  protected slug = '';
+  protected verifonePoiId = '';
+  protected payWithQrEnabled = true;
+  protected payWithSmsEnabled = false;
+  protected payWithLaterEnabled = false;
+  protected isActive = true;
+
+  protected readonly loading = signal(false);
+  protected readonly saving = signal(false);
+  protected readonly error = signal('');
+  protected readonly confirmDeactivate = signal(false);
+
+  ngOnInit(): void {
+    this.tenantSlug = this.route.parent?.snapshot.paramMap.get('tenantSlug') ?? '';
+    this.kasseId = this.route.snapshot.paramMap.get('kasseId') ?? '';
+    this.isEdit = this.kasseId !== 'new' && this.kasseId.length > 0;
+    if (this.isEdit) {
+      this.load();
+    }
+  }
+
+  protected kioskUrl(): string {
+    const path = this.type === 'kiosk' ? 'kiosk' : 'kasse';
+    return `payment.rns-apps.dk/${this.tenantSlug}/${path}/${this.slug}`;
+  }
+
+  protected load(): void {
+    this.loading.set(true);
+    this.kasserApi.get(this.tenantSlug, this.kasseId).subscribe({
+      next: (k) => {
+        this.type = k.type;
+        this.name = k.name;
+        this.slug = k.slug;
+        this.verifonePoiId = k.verifonePoiId ?? '';
+        this.payWithQrEnabled = k.payWithQrEnabled;
+        this.payWithSmsEnabled = k.payWithSmsEnabled;
+        this.payWithLaterEnabled = k.payWithLaterEnabled;
+        this.isActive = k.isActive;
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.error.set(apiErrorMessage(err, 'Could not load kasse.'));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  protected save(): void {
+    this.saving.set(true);
+    this.error.set('');
+    const body = {
+      type: this.type,
+      name: this.name,
+      slug: this.slug,
+      verifonePoiId: this.type === 'register' ? this.verifonePoiId || undefined : undefined,
+      payWithQrEnabled: this.type === 'kiosk' ? this.payWithQrEnabled : undefined,
+      payWithSmsEnabled: this.type === 'kiosk' ? this.payWithSmsEnabled : undefined,
+      payWithLaterEnabled: this.type === 'kiosk' ? this.payWithLaterEnabled : undefined,
+      isActive: this.isEdit ? this.isActive : undefined,
+    };
+
+    const req = this.isEdit
+      ? this.kasserApi.update(this.tenantSlug, this.kasseId, body)
+      : this.kasserApi.create(this.tenantSlug, body);
+
+    req.subscribe({
+      next: () => {
+        this.saving.set(false);
+        void this.router.navigate(['/', this.tenantSlug, 'admin', 'kasser']);
+      },
+      error: (err) => {
+        this.error.set(apiErrorMessage(err, 'Could not save kasse.'));
+        this.saving.set(false);
+      },
+    });
+  }
+
+  protected openDeactivate(): void {
+    this.confirmDeactivate.set(true);
+  }
+
+  protected deactivate(): void {
+    this.saving.set(true);
+    this.kasserApi.update(this.tenantSlug, this.kasseId, { isActive: false }).subscribe({
+      next: () => {
+        this.isActive = false;
+        this.confirmDeactivate.set(false);
+        this.saving.set(false);
+      },
+      error: (err) => {
+        this.error.set(apiErrorMessage(err, 'Could not deactivate kasse.'));
+        this.confirmDeactivate.set(false);
+        this.saving.set(false);
+      },
+    });
+  }
+
+  protected cancelListLink(): string[] {
+    return ['/', this.tenantSlug, 'admin', 'kasser'];
+  }
+}

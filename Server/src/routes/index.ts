@@ -5,6 +5,7 @@ import { registerCheckoutRoutes } from './checkout.routes.js';
 import { registerKasseRoutes } from './kasse.routes.js';
 import { registerOrdersRoutes } from './orders.routes.js';
 import { registerPlatformRoutes } from './platform.routes.js';
+import { registerCatalogRoutes } from './catalog.routes.js';
 import { registerWebhookRoutes } from './webhook.routes.js';
 
 export function registerRoutes(app: Express) {
@@ -15,4 +16,5 @@ export function registerRoutes(app: Express) {
   registerKasseRoutes(app);
   registerOrdersRoutes(app);
   registerPlatformRoutes(app);
+  registerCatalogRoutes(app);
 }

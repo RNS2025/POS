@@ -1,0 +1,56 @@
+<div class="page-title">
+  <h1>Kasser</h1>
+  <p>Self-service kiosks and staff registers.</p>
+</div>
+
+<div class="wf-toolbar">
+  <a class="wf-btn primary" [routerLink]="['new']">New kasse</a>
+</div>
+
+<async-shell
+  [loading]="loading() && items().length === 0"
+  [error]="error()"
+  [empty]="!loading() && items().length === 0"
+  emptyMessage="No kasser yet."
+>
+  <table class="wf-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Slug</th>
+        <th>Products</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (k of items(); track k.id) {
+        <tr>
+          <td>
+            <a [routerLink]="[k.id]">{{ k.name }}</a>
+          </td>
+          <td>
+            <span class="wf-badge" [class.live]="k.type === 'kiosk'" [class.pending]="k.type === 'register'">
+              {{ k.type }}
+            </span>
+          </td>
+          <td><code>{{ k.slug }}</code></td>
+          <td>{{ k.productCount ?? 0 }}</td>
+          <td>
+            <span class="wf-badge" [class.live]="k.isActive" [class.inactive]="!k.isActive">
+              {{ k.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <pos-paginator
+    [page]="page()"
+    [total]="total()"
+    [limit]="limit"
+    (prev)="prevPage()"
+    (next)="nextPage()"
+  />
+</async-shell>

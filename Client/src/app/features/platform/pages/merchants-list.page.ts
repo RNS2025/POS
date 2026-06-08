@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import type { MerchantStatus, PlatformDashboardStats, PlatformMerchantSummary } from '@shared/platform';
 import { LogoutLink } from '../../../core/components/logout-link';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PosButtonComponent } from '../../../shared/components/pos-button/pos-button.component';
 import { PlatformService } from '../../../core/services/platform.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 import { merchantStatusLabel } from '../../../core/utils/merchant-status';
@@ -19,7 +21,7 @@ const STATUS_OPTIONS: { value: '' | MerchantStatus; label: string }[] = [
 
 @Component({
   selector: 'app-platform-merchants-list',
-  imports: [FormsModule, RouterLink, LogoutLink, DatePipe],
+  imports: [FormsModule, RouterLink, LogoutLink, DatePipe, PosButtonComponent, PaginatorComponent],
   templateUrl: './merchants-list.page.html',
 })
 export class MerchantsListPage implements OnInit {

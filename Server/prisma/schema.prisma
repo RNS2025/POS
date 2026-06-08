@@ -25,6 +25,9 @@ model Tenant {
   platformNotes        PlatformMerchantNote[]
   invites              TenantInvite[]
   orders               Order[]
+  kasser               Kasse[]
+  categories           Category[]
+  products             Product[]
 
   @@map("tenants")
 }
@@ -67,10 +70,14 @@ model User {
   email         String
   passwordHash  String                 @map("password_hash")
   role          String
+  displayName   String?                @map("display_name")
+  pinHash       String?                @map("pin_hash")
+  isActive      Boolean                @default(true) @map("is_active")
   createdAt     DateTime               @default(now()) @map("created_at")
   updatedAt     DateTime               @updatedAt @map("updated_at")
   tenant        Tenant?                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   platformNotes PlatformMerchantNote[] @relation("PlatformNoteAuthor")
+  staffOrders   Order[]                @relation("OrderStaff")
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -104,6 +111,77 @@ model TenantInvite {
   @@map("tenant_invites")
 }
 
+model Kasse {
+  id                  String         @id @default(uuid()) @db.Uuid
+  tenantId            String         @map("tenant_id") @db.Uuid
+  type                String
+  name                String
+  slug                String
+  verifonePoiId       String?        @map("verifone_poi_id")
+  payWithQrEnabled    Boolean        @default(true) @map("pay_with_qr_enabled")
+  payWithSmsEnabled   Boolean        @default(false) @map("pay_with_sms_enabled")
+  payWithLaterEnabled Boolean        @default(false) @map("pay_with_later_enabled")
+  isActive            Boolean        @default(true) @map("is_active")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+  tenant              Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  productKasser       ProductKasse[]
+  orders              Order[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@map("kasser")
+}
+
+model Category {
+  id        String    @id @default(uuid()) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  name      String
+  sortOrder Int       @default(0) @map("sort_order")
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  products  Product[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, sortOrder])
+  @@map("categories")
+}
+
+model Product {
+  id            String          @id @default(uuid()) @db.Uuid
+  tenantId      String          @map("tenant_id") @db.Uuid
+  name          String
+  priceOre      Int             @map("price_ore")
+  categoryId    String?         @map("category_id") @db.Uuid
+  imageKey      String?         @map("image_key")
+  isActive      Boolean         @default(true) @map("is_active")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category      Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  productKasser ProductKasse[]
+  lineItems     OrderLineItem[]
+
+  @@index([tenantId])
+  @@index([tenantId, categoryId])
+  @@map("products")
+}
+
+model ProductKasse {
+  tenantId  String  @map("tenant_id") @db.Uuid
+  productId String  @map("product_id") @db.Uuid
+  kasseId   String  @map("kasse_id") @db.Uuid
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  kasse     Kasse   @relation(fields: [kasseId], references: [id], onDelete: Cascade)
+
+  @@id([productId, kasseId])
+  @@index([tenantId])
+  @@index([kasseId])
+  @@map("product_kasse")
+}
+
 model Order {
   id               String          @id @default(uuid()) @db.Uuid
   tenantId         String          @map("tenant_id") @db.Uuid
@@ -113,18 +191,44 @@ model Order {
   currency         String          @default("DKK")
   status           String
   customerEmail    String?         @map("customer_email")
+  customerPhone    String?         @map("customer_phone")
+  paymentMethod    String?         @map("payment_method")
   description      String?
+  kasseId          String?         @map("kasse_id") @db.Uuid
+  staffUserId      String?         @map("staff_user_id") @db.Uuid
   createdAt        DateTime        @default(now()) @map("created_at")
   updatedAt        DateTime        @updatedAt @map("updated_at")
   tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  kasse            Kasse?          @relation(fields: [kasseId], references: [id], onDelete: SetNull)
+  staffUser        User?           @relation("OrderStaff", fields: [staffUserId], references: [id], onDelete: SetNull)
   payment          Payment?
   paymentActions   PaymentAction[]
+  lineItems        OrderLineItem[]
 
   @@unique([tenantId, quickpayOrderRef])
   @@index([tenantId])
   @@index([tenantId, createdAt])
   @@index([tenantId, status])
+  @@index([tenantId, kasseId])
+  @@index([tenantId, staffUserId])
   @@map("orders")
+}
+
+model OrderLineItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  orderId      String   @map("order_id") @db.Uuid
+  productId    String?  @map("product_id") @db.Uuid
+  nameSnapshot String   @map("name_snapshot")
+  unitPriceOre Int      @map("unit_price_ore")
+  quantity     Int
+  lineTotalOre Int      @map("line_total_ore")
+  createdAt    DateTime @default(now()) @map("created_at")
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, orderId])
+  @@map("order_line_items")
 }
 
 model Payment {

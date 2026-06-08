@@ -2,14 +2,24 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { LogoutLink } from '../../../../core/components/logout-link';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { CopyFieldComponent } from '../../../../shared/components/copy-field/copy-field.component';
+import { PosButtonComponent } from '../../../../shared/components/pos-button/pos-button.component';
 import { OrdersService } from '../../../../core/services/orders.service';
 import { apiErrorMessage } from '../../../../core/utils/api-error';
 import type { OrderDetailResponse, PaymentActionType, RetryOrderResponse, SyncOrderStatusResponse } from '@shared/orders';
 
 @Component({
   selector: 'app-order-detail-page',
-  imports: [FormsModule, RouterLink, LogoutLink, CurrencyPipe, DatePipe],
+  imports: [
+    FormsModule,
+    RouterLink,
+    CurrencyPipe,
+    DatePipe,
+    PosButtonComponent,
+    ConfirmDialogComponent,
+    CopyFieldComponent,
+  ],
   templateUrl: './order-detail.page.html',
 })
 export class OrderDetailPage implements OnInit {
@@ -26,10 +36,15 @@ export class OrderDetailPage implements OnInit {
   protected readonly paymentUrl = signal('');
 
   protected refundAmountDkk = 0;
-  protected showRefundForm = false;
+  protected readonly refundDialogOpen = signal(false);
+  protected readonly voidDialogOpen = signal(false);
+  protected readonly abortDialogOpen = signal(false);
 
   ngOnInit(): void {
-    this.tenantSlug = this.route.snapshot.paramMap.get('tenantSlug') ?? '';
+    this.tenantSlug =
+      this.route.parent?.snapshot.paramMap.get('tenantSlug') ??
+      this.route.snapshot.paramMap.get('tenantSlug') ??
+      '';
     this.orderId = this.route.snapshot.paramMap.get('orderId') ?? '';
     this.load();
   }
@@ -50,16 +65,6 @@ export class OrderDetailPage implements OnInit {
         this.error.set(apiErrorMessage(err, 'Could not load order.'));
         this.loading.set(false);
       },
-    });
-  }
-
-  protected copyPaymentLink(): void {
-    const url = this.paymentUrl() || this.order()?.paymentUrl;
-    if (!url) {
-      return;
-    }
-    void navigator.clipboard.writeText(url).then(() => {
-      this.success.set('Payment link copied to clipboard.');
     });
   }
 
@@ -101,13 +106,14 @@ export class OrderDetailPage implements OnInit {
       () => this.ordersApi.refund(this.tenantSlug, this.orderId, { amountOre }, key),
       () => {
         this.success.set('Refund submitted.');
-        this.showRefundForm = false;
+        this.refundDialogOpen.set(false);
         this.load();
       },
     );
   }
 
   protected voidSale(): void {
+    this.voidDialogOpen.set(false);
     this.runAction(
       () => this.ordersApi.voidSale(this.tenantSlug, this.orderId),
       () => {
@@ -118,6 +124,7 @@ export class OrderDetailPage implements OnInit {
   }
 
   protected abortSale(): void {
+    this.abortDialogOpen.set(false);
     this.runAction(
       () => this.ordersApi.abortSale(this.tenantSlug, this.orderId),
       () => {

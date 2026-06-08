@@ -1,78 +1,49 @@
-<h1>Create your shop</h1>
+<div class="auth-page">
+  <div class="auth-card">
+    <h1>Create your shop</h1>
 
+    <form class="wf-form" (ngSubmit)="submit()">
+      <label>
+        Shop name
+        <input name="shopName" [(ngModel)]="shopName" required />
+      </label>
 
+      <label>
+        Shop web address
+        <input name="slug" [(ngModel)]="slug" required placeholder="acme-bakery" />
+      </label>
+      <p class="wf-hint">Your shop will be at payment.rns-apps.dk/{{ slug || 'your-shop-name' }}</p>
 
-<form (ngSubmit)="submit()">
+      <label>
+        Your email
+        <input name="email" type="email" [(ngModel)]="email" required />
+      </label>
 
-  <p>
+      <label>
+        Password
+        <input
+          name="password"
+          type="password"
+          [(ngModel)]="password"
+          required
+          minlength="8"
+          maxlength="128"
+          autocomplete="new-password"
+        />
+      </label>
+      <p class="wf-hint">Password must be at least 8 characters (maximum 128).</p>
 
-    <label>
+      @if (error()) {
+        <p class="wf-alert error">{{ error() }}</p>
+      }
 
-      Shop name
+      <div class="wf-form-actions">
+        <button type="submit" class="wf-btn primary block" [disabled]="loading()">
+          {{ loading() ? 'Creating…' : 'Create shop' }}
+        </button>
+      </div>
+    </form>
 
-      <input name="shopName" [(ngModel)]="shopName" required />
-
-    </label>
-
-  </p>
-
-  <p>
-
-    <label>
-
-      Shop web address
-
-      <input name="slug" [(ngModel)]="slug" required placeholder="acme-bakery" />
-
-    </label>
-
-  </p>
-
-  <p>Your shop will be at payment.rns-apps.dk/{{ slug || 'your-shop-name' }}</p>
-
-  <p>
-
-    <label>
-
-      Your email
-
-      <input name="email" type="email" [(ngModel)]="email" required />
-
-    </label>
-
-  </p>
-
-  <p>
-    <label>
-      Password
-      <input
-        name="password"
-        type="password"
-        [(ngModel)]="password"
-        required
-        minlength="8"
-        maxlength="128"
-        autocomplete="new-password"
-      />
-    </label>
-  </p>
-  <p>Password must be at least 8 characters (maximum 128).</p>
-
-  @if (error()) {
-
-    <p>{{ error() }}</p>
-
-  }
-
-  <p>
-
-    <button type="submit" [disabled]="loading()">Create shop</button>
-
-  </p>
-
-</form>
-
-
-
-<p><a routerLink="/login">Already have a shop? Log in</a></p>
-
+    <p class="auth-footer"><a routerLink="/login">Already have a shop? Log in</a></p>
+  </div>
+</div>

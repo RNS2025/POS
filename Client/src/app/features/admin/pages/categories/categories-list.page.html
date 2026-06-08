@@ -1,0 +1,73 @@
+<div class="page-title">
+  <h1>Categories</h1>
+</div>
+
+<div class="wf-toolbar">
+  <a class="wf-btn primary" [routerLink]="['new']">New category</a>
+</div>
+
+<async-shell
+  [loading]="loading() && items().length === 0"
+  [error]="error()"
+  [empty]="!loading() && items().length === 0"
+  emptyMessage="No categories yet."
+>
+  <table class="wf-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Sort</th>
+        <th>Products</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (c of items(); track c.id) {
+        <tr>
+          <td>
+            <a [routerLink]="[c.id]">{{ c.name }}</a>
+          </td>
+          <td>{{ c.sortOrder }}</td>
+          <td>{{ c.productCount }}</td>
+          <td>
+            <span class="wf-badge" [class.live]="c.isActive" [class.inactive]="!c.isActive">
+              {{ c.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td>
+            @if (c.isActive) {
+              <pos-button type="button" variant="ghost" (pressed)="openDeactivate(c)">Deactivate</pos-button>
+            }
+            <pos-button
+              type="button"
+              variant="danger"
+              [disabled]="c.productCount > 0"
+              (pressed)="openDelete(c)"
+            >
+              Delete
+            </pos-button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <pos-paginator
+    [page]="page()"
+    [total]="total()"
+    [limit]="limit"
+    (prev)="prevPage()"
+    (next)="nextPage()"
+  />
+</async-shell>
+
+<confirm-dialog
+  [open]="confirmOpen()"
+  [title]="confirmTitle()"
+  [message]="confirmMessage()"
+  [confirmLabel]="confirmLabel()"
+  [confirmLoading]="actionLoading()"
+  (confirmed)="runConfirm()"
+  (cancelled)="confirmOpen.set(false)"
+/>

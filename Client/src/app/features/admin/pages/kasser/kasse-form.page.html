@@ -1,0 +1,81 @@
+<div class="page-title">
+  <h1>{{ isEdit ? 'Edit kasse' : 'New kasse' }}</h1>
+</div>
+
+@if (loading()) {
+  <p class="wf-loading">Loading…</p>
+} @else {
+  <form class="wf-form" (ngSubmit)="save()">
+    <label>
+      Type
+      <select name="type" [(ngModel)]="type" [disabled]="isEdit">
+        <option value="kiosk">Kiosk (self-service)</option>
+        <option value="register">Register (staff)</option>
+      </select>
+    </label>
+    <label>
+      Name
+      <input name="name" [(ngModel)]="name" required />
+    </label>
+    <label>
+      Link slug
+      <input name="slug" [(ngModel)]="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" />
+    </label>
+
+    @if (slug) {
+      <p class="wf-hint">Customer link</p>
+      <copy-field [value]="kioskUrl()" ariaLabel="Kasse URL" />
+    }
+
+    @if (type === 'register') {
+      <label>
+        Verifone POI ID
+        <input name="verifonePoiId" [(ngModel)]="verifonePoiId" />
+      </label>
+    }
+
+    @if (type === 'kiosk') {
+      <fieldset class="wf-fieldset">
+        <legend>Customer payment methods</legend>
+        <label>
+          <input type="checkbox" name="payWithQrEnabled" [(ngModel)]="payWithQrEnabled" />
+          Pay with QR
+        </label>
+        <label>
+          <input type="checkbox" name="payWithSmsEnabled" [(ngModel)]="payWithSmsEnabled" />
+          Pay with SMS
+        </label>
+        <label>
+          <input type="checkbox" name="payWithLaterEnabled" [(ngModel)]="payWithLaterEnabled" />
+          Pay later
+        </label>
+      </fieldset>
+    }
+
+    @if (isEdit && isActive) {
+      <p>
+        <button type="button" class="wf-btn danger" (click)="openDeactivate()">Deactivate kasse</button>
+      </p>
+    }
+
+    @if (error()) {
+      <p class="wf-alert error">{{ error() }}</p>
+    }
+
+    <form-actions
+      [saving]="saving()"
+      [cancelLink]="cancelListLink()"
+      [saveLabel]="isEdit ? 'Save changes' : 'Create kasse'"
+    />
+  </form>
+}
+
+<confirm-dialog
+  [open]="confirmDeactivate()"
+  title="Deactivate kasse?"
+  message="Customers will no longer be able to use this kasse link."
+  confirmLabel="Deactivate"
+  [confirmLoading]="saving()"
+  (confirmed)="deactivate()"
+  (cancelled)="confirmDeactivate.set(false)"
+/>

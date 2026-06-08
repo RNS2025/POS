@@ -169,8 +169,11 @@
   animation: landing-pulse-ring 3s ease-in-out infinite;
 }
 
-html,
-body {
+/* Landing dark theme — scoped so admin/auth keep light styles from styles.scss */
+app-landing-page,
+.landing-page {
+  display: block;
+  min-height: 100vh;
   background-color: var(--color-surface);
   color: var(--color-ink);
 }

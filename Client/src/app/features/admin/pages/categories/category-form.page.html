@@ -1,0 +1,28 @@
+<div class="page-title">
+  <h1>{{ isEdit ? 'Edit category' : 'New category' }}</h1>
+</div>
+
+@if (loading()) {
+  <p class="wf-loading">Loading…</p>
+} @else {
+  <form class="wf-form" (ngSubmit)="save()">
+    <label>
+      Name
+      <input name="name" [(ngModel)]="name" required />
+    </label>
+    <label>
+      Sort order
+      <input name="sortOrder" type="number" [(ngModel)]="sortOrder" />
+    </label>
+
+    @if (error()) {
+      <p class="wf-alert error">{{ error() }}</p>
+    }
+
+    <form-actions
+      [saving]="saving()"
+      [cancelLink]="cancelListLink()"
+      [saveLabel]="isEdit ? 'Save changes' : 'Create category'"
+    />
+  </form>
+}

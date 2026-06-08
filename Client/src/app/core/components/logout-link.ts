@@ -6,9 +6,9 @@ import { SessionService } from '../services/session.service';
   selector: 'app-logout-link',
   template: `
     @if (loggedIn()) {
-      <p>
-        Logged in as {{ email() }}.
-        <button type="button" (click)="logout()">Log out</button>
+      <p class="session-bar">
+        {{ email() }}
+        <button type="button" class="wf-btn ghost" (click)="logout()">Log out</button>
       </p>
     }
   `,

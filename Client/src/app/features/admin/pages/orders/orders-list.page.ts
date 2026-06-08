@@ -2,7 +2,8 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { LogoutLink } from '../../../../core/components/logout-link';
+import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
+import { PosButtonComponent } from '../../../../shared/components/pos-button/pos-button.component';
 import { OrdersService } from '../../../../core/services/orders.service';
 import { apiErrorMessage } from '../../../../core/utils/api-error';
 import type { OrderListItem, PaymentChannel } from '@shared/orders';
@@ -10,7 +11,7 @@ import type { OrderStatus } from '@shared/checkout';
 
 @Component({
   selector: 'app-orders-list-page',
-  imports: [FormsModule, RouterLink, LogoutLink, CurrencyPipe, DatePipe],
+  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, PosButtonComponent, PaginatorComponent],
   templateUrl: './orders-list.page.html',
 })
 export class OrdersListPage implements OnInit {
@@ -30,7 +31,10 @@ export class OrdersListPage implements OnInit {
   protected searchQuery = '';
 
   ngOnInit(): void {
-    this.tenantSlug = this.route.snapshot.paramMap.get('tenantSlug') ?? '';
+    this.tenantSlug =
+      this.route.parent?.snapshot.paramMap.get('tenantSlug') ??
+      this.route.snapshot.paramMap.get('tenantSlug') ??
+      '';
     this.load();
   }
 

@@ -1,95 +1,106 @@
-<h1>RNS merchants</h1>
+<div class="platform-page" data-shell="platform">
+  <header class="wf-topbar">
+    <div>
+      <span class="brand">RNS Platform</span>
+      <span class="sub">Merchants</span>
+    </div>
+    <div class="actions">
+      <app-logout-link />
+    </div>
+  </header>
 
-<p><a routerLink="/platform/merchants/new">Create merchant</a></p>
+  <div class="page-title">
+    <h1>Merchants</h1>
+  </div>
 
-<app-logout-link />
+  <div class="wf-toolbar">
+    <a class="wf-btn primary" routerLink="/platform/merchants/new">Create merchant</a>
+  </div>
 
-@if (stats(); as s) {
-  <section>
-    <h2>Overview</h2>
-    <p>Total: {{ s.total }}</p>
-    <ul>
-      <li>Registered: {{ s.byStatus.registered }}</li>
-      <li>Quickpay connected: {{ s.byStatus.quickpay_connected }}</li>
-      <li>Awaiting Clearhaus: {{ s.byStatus.clearhaus_pending }}</li>
-      <li>Live: {{ s.byStatus.live }}</li>
-      <li>Needs attention: {{ s.byStatus.attention }}</li>
-    </ul>
-    <h3>Orders</h3>
-    <ul>
-      <li>Total orders: {{ s.totalOrders }}</li>
-      <li>Last 7 days: {{ s.ordersLast7Days }}</li>
-      <li>Captured: {{ s.capturedOrders }}</li>
-    </ul>
-  </section>
-}
+  @if (stats(); as s) {
+    <div class="wf-stats">
+      <div class="wf-stat">
+        <span>Total merchants</span>
+        <strong>{{ s.total }}</strong>
+      </div>
+      <div class="wf-stat">
+        <span>Live</span>
+        <strong>{{ s.byStatus.live }}</strong>
+      </div>
+      <div class="wf-stat">
+        <span>Orders (7d)</span>
+        <strong>{{ s.ordersLast7Days }}</strong>
+      </div>
+      <div class="wf-stat">
+        <span>Captured</span>
+        <strong>{{ s.capturedOrders }}</strong>
+      </div>
+    </div>
+  }
 
-@if (loading() && merchants().length === 0) {
-  <p>Loading…</p>
-} @else {
-  <form (ngSubmit)="applyFilters()">
-    <p>
+  @if (loading() && merchants().length === 0) {
+    <p class="wf-loading">Loading…</p>
+  } @else {
+    <form class="wf-form wf-toolbar" (ngSubmit)="applyFilters()">
       <label>
         Search
-        <input name="search" [(ngModel)]="search" placeholder="Shop name, web address, or email" />
+        <input class="wf-search" name="search" [(ngModel)]="search" placeholder="Shop name, web address, or email" />
       </label>
-    </p>
-    <p>
       <label>
         Status
-        <select name="status" [(ngModel)]="statusFilter">
+        <select class="wf-select" name="status" [(ngModel)]="statusFilter">
           @for (opt of statusOptions; track opt.value) {
             <option [value]="opt.value">{{ opt.label }}</option>
           }
         </select>
       </label>
-    </p>
-    <p>
-      <button type="submit" [disabled]="loading()">Apply</button>
-      <button type="button" (click)="exportCsv()" [disabled]="loading()">Export CSV</button>
-    </p>
-  </form>
+      <pos-button type="submit" variant="primary" [loading]="loading()">Apply</pos-button>
+      <pos-button type="button" variant="secondary" [loading]="loading()" (pressed)="exportCsv()">Export CSV</pos-button>
+    </form>
 
-  @if (error()) {
-    <p>{{ error() }}</p>
-  }
+    @if (error()) {
+      <p class="wf-alert error">{{ error() }}</p>
+    }
 
-  <p>{{ total() }} merchant(s)</p>
+    <p class="wf-hint">{{ total() }} merchant(s)</p>
 
-  @if (merchants().length === 0) {
-    <p>No merchants match your filters.</p>
-  } @else {
-    <table>
-      <thead>
-        <tr>
-          <th>Shop</th>
-          <th>Web address</th>
-          <th>Status</th>
-          <th>Contact</th>
-          <th>Orders</th>
-          <th>Last order</th>
-          <th>Registered</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (m of merchants(); track m.id) {
+    @if (merchants().length === 0) {
+      <p class="wf-empty">No merchants match your filters.</p>
+    } @else {
+      <table class="wf-table">
+        <thead>
           <tr>
-            <td><a [routerLink]="['/platform', 'merchants', m.id]">{{ m.name }}</a></td>
-            <td>{{ m.slug }}</td>
-            <td>{{ statusLabel(m.status) }}</td>
-            <td>{{ m.primaryContactEmail ?? '—' }}</td>
-            <td>{{ m.orderCount }}</td>
-            <td>{{ m.lastOrderAt ? (m.lastOrderAt | date: 'mediumDate') : '—' }}</td>
-            <td>{{ m.createdAt | date: 'mediumDate' }}</td>
+            <th>Shop</th>
+            <th>Web address</th>
+            <th>Status</th>
+            <th>Contact</th>
+            <th>Orders</th>
+            <th>Last order</th>
+            <th>Registered</th>
           </tr>
-        }
-      </tbody>
-    </table>
-  }
+        </thead>
+        <tbody>
+          @for (m of merchants(); track m.id) {
+            <tr>
+              <td><a [routerLink]="['/platform', 'merchants', m.id]">{{ m.name }}</a></td>
+              <td><code>{{ m.slug }}</code></td>
+              <td>{{ statusLabel(m.status) }}</td>
+              <td>{{ m.primaryContactEmail ?? '—' }}</td>
+              <td>{{ m.orderCount }}</td>
+              <td>{{ m.lastOrderAt ? (m.lastOrderAt | date: 'mediumDate') : '—' }}</td>
+              <td>{{ m.createdAt | date: 'mediumDate' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
 
-  <p>
-    <button type="button" (click)="prevPage()" [disabled]="page() <= 1 || loading()">Previous</button>
-    Page {{ page() }}
-    <button type="button" (click)="nextPage()" [disabled]="!hasMore() || loading()">Next</button>
-  </p>
-}
+    <pos-paginator
+      [page]="page()"
+      [total]="total()"
+      [hasMore]="hasMore()"
+      (prev)="prevPage()"
+      (next)="nextPage()"
+    />
+  }
+</div>

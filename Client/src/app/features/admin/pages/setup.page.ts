@@ -1,14 +1,13 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import type { SetupResponse } from '@shared/setup';
-import { LogoutLink } from '../../../core/components/logout-link';
+import type { SetupQuickpayRequest, SetupResponse, SetupVerifoneRequest } from '@shared/setup';
 import { SetupService } from '../../../core/services/setup.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 
 @Component({
   selector: 'app-setup-page',
-  imports: [FormsModule, LogoutLink, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './setup.page.html',
 })
 export class SetupPage implements OnInit {
@@ -31,7 +30,10 @@ export class SetupPage implements OnInit {
   protected readonly savingVerifone = signal(false);
 
   ngOnInit(): void {
-    this.tenantSlug = this.route.snapshot.paramMap.get('tenantSlug') ?? '';
+    this.tenantSlug =
+      this.route.parent?.snapshot.paramMap.get('tenantSlug') ??
+      this.route.snapshot.paramMap.get('tenantSlug') ??
+      '';
     this.loadSetup();
   }
 
@@ -62,12 +64,15 @@ export class SetupPage implements OnInit {
     this.error.set('');
     this.saving.set(true);
 
-    this.setupService
-      .saveQuickpay(this.tenantSlug, {
-        merchantId: this.merchantId,
-        privateKey: this.privateKey,
-        apiKey: this.apiKey,
-      })
+    const body: SetupQuickpayRequest = { merchantId: this.merchantId };
+    if (this.privateKey.trim()) {
+      body.privateKey = this.privateKey.trim();
+    }
+    if (this.apiKey.trim()) {
+      body.apiKey = this.apiKey.trim();
+    }
+
+    this.setupService.saveQuickpay(this.tenantSlug, body)
       .subscribe({
         next: (res) => {
           this.setup.set(res);
@@ -89,14 +94,17 @@ export class SetupPage implements OnInit {
     this.error.set('');
     this.savingVerifone.set(true);
 
-    this.setupService
-      .saveVerifone(this.tenantSlug, {
-        userUid: this.verifoneUserUid,
-        apiKey: this.verifoneApiKey,
-        poiId: this.verifonePoiId,
-        saleId: this.verifoneSaleId,
-        useSimulator: this.verifoneUseSimulator,
-      })
+    const body: SetupVerifoneRequest = {
+      userUid: this.verifoneUserUid,
+      poiId: this.verifonePoiId,
+      saleId: this.verifoneSaleId,
+      useSimulator: this.verifoneUseSimulator,
+    };
+    if (this.verifoneApiKey.trim()) {
+      body.apiKey = this.verifoneApiKey.trim();
+    }
+
+    this.setupService.saveVerifone(this.tenantSlug, body)
       .subscribe({
         next: (res) => {
           this.setup.set(res);

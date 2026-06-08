@@ -16,13 +16,13 @@ import { config } from '../infra/config.js';
 
 const quickpaySchema = z.object({
   merchantId: z.string().min(1, 'Enter your Quickpay merchant number').max(64, 'Merchant number is too long'),
-  privateKey: z.string().min(1, 'Enter your Quickpay private key').max(512).optional(),
-  apiKey: z.string().min(1, 'Enter your Quickpay payment window key').max(512).optional(),
+  privateKey: z.string().max(512).optional(),
+  apiKey: z.string().max(512).optional(),
 });
 
 const verifoneSchema = z.object({
   userUid: z.string().min(1, 'Enter your Verifone user UID').max(128),
-  apiKey: z.string().min(1, 'Enter your Verifone API key').max(512).optional(),
+  apiKey: z.string().max(512).optional(),
   poiId: z.string().min(1, 'Enter your terminal ID (POIID)').max(64),
   saleId: z.string().min(1, 'Enter your sale ID').max(64),
   useSimulator: z.boolean().optional(),
@@ -88,14 +88,13 @@ export class SetupService implements ISetupService {
     const data = quickpaySchema.parse(input);
     const existing = await this.quickpayConfigs.findByTenantId(tenant.id);
 
-    const privateKey = data.privateKey?.trim()
-      ?? (existing ? decryptSecret(existing.privateKeyEnc) : '');
-    const apiKey = data.apiKey?.trim() ?? (existing ? decryptSecret(existing.apiKeyEnc) : '');
+    const privateKey =
+      data.privateKey?.trim() || (existing ? decryptSecret(existing.privateKeyEnc) : '');
+    const apiKey = data.apiKey?.trim() || (existing ? decryptSecret(existing.apiKeyEnc) : '');
 
     if (!privateKey || !apiKey) {
       throw new AppError(
-        'Enter both the private key and payment window key from Quickpay Manager → Settings → Integration. ' +
-          'If you saved keys before, paste them again to update.',
+        'Enter both the private key and payment window key from Quickpay Manager → Settings → Integration.',
         400,
       );
     }
@@ -131,12 +130,9 @@ export class SetupService implements ISetupService {
     const data = verifoneSchema.parse(input);
     const existing = await this.verifoneConfigs.findByTenantId(tenant.id);
 
-    const apiKey = data.apiKey?.trim() ?? (existing ? decryptSecret(existing.apiKeyEnc) : '');
+    const apiKey = data.apiKey?.trim() || (existing ? decryptSecret(existing.apiKeyEnc) : '');
     if (!apiKey) {
-      throw new AppError(
-        'Enter your Verifone API key from Verifone Central. If you saved it before, paste it again to update.',
-        400,
-      );
+      throw new AppError('Enter your Verifone API key from Verifone Central.', 400);
     }
 
     const useSimulator = data.useSimulator ?? existing?.useSimulator ?? config.verifoneSimulator;

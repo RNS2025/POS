@@ -1,0 +1,80 @@
+<div class="page-title">
+  <h1>{{ isEdit ? 'Edit product' : 'New product' }}</h1>
+</div>
+
+@if (loading()) {
+  <p class="wf-loading">Loading…</p>
+} @else {
+  <form class="wf-form" (ngSubmit)="save()">
+    <label>
+      Name
+      <input name="name" [(ngModel)]="name" required />
+    </label>
+    <label>
+      Price (DKK)
+      <input name="priceKr" type="number" step="0.01" min="0" [(ngModel)]="priceKr" required />
+    </label>
+    <label>
+      Category
+      <select name="categoryId" [(ngModel)]="categoryId">
+        <option value="">None</option>
+        @for (c of categories(); track c.id) {
+          <option [value]="c.id">{{ c.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Image
+      <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onFileChange($event)" />
+    </label>
+    @if (existingImageUrl && !removeImage) {
+      <div class="wf-image-preview">
+        <img [src]="existingImageUrl" alt="Current product image" />
+      </div>
+      <label>
+        <input type="checkbox" name="removeImage" [(ngModel)]="removeImage" />
+        Remove image
+      </label>
+    }
+
+    <fieldset class="wf-fieldset">
+      <legend>Visible on kasser</legend>
+      @for (k of kasser(); track k.id) {
+        <label>
+          <input
+            type="checkbox"
+            [checked]="isKasseSelected(k.id)"
+            (change)="toggleKasse(k.id, $any($event.target).checked)"
+          />
+          {{ k.name }} ({{ k.type }})
+        </label>
+      }
+    </fieldset>
+
+    @if (isEdit && isActive) {
+      <p>
+        <button type="button" class="wf-btn danger" (click)="openDeactivate()">Deactivate product</button>
+      </p>
+    }
+
+    @if (error()) {
+      <p class="wf-alert error">{{ error() }}</p>
+    }
+
+    <form-actions
+      [saving]="saving()"
+      [cancelLink]="cancelListLink()"
+      [saveLabel]="isEdit ? 'Save changes' : 'Create product'"
+    />
+  </form>
+}
+
+<confirm-dialog
+  [open]="confirmDeactivate()"
+  title="Deactivate product?"
+  message="This product will be hidden from kiosk and register menus."
+  confirmLabel="Deactivate"
+  [confirmLoading]="saving()"
+  (confirmed)="deactivate()"
+  (cancelled)="confirmDeactivate.set(false)"
+/>

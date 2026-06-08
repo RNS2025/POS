@@ -1,14 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { LogoutLink } from '../../../core/components/logout-link';
 import { AuthService } from '../../../core/services/auth.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 import { SessionService } from '../../../core/services/session.service';
 
 @Component({
   selector: 'app-login-page',
-  imports: [FormsModule, RouterLink, LogoutLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './login.page.html',
 })
 export class LoginPage {

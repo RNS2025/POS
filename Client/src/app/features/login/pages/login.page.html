@@ -1,62 +1,37 @@
-<h1>Log in</h1>
+<div class="auth-page">
+  <div class="auth-card">
+    <h1>Log in</h1>
 
-<app-logout-link />
+    <form class="wf-form" (ngSubmit)="submit()">
+      <label>
+        Shop web address
+        <input name="tenantSlug" [(ngModel)]="tenantSlug" placeholder="acme-bakery" />
+      </label>
+      <p class="wf-hint">
+        The name from your shop link — e.g. payment.rns-apps.dk/acme-bakery. Leave blank for RNS platform staff.
+      </p>
 
-<form (ngSubmit)="submit()">
+      <label>
+        Email
+        <input name="email" type="email" [(ngModel)]="email" required />
+      </label>
 
-  <p>
+      <label>
+        Password
+        <input name="password" type="password" [(ngModel)]="password" required />
+      </label>
 
-    <label>
+      @if (error()) {
+        <p class="wf-alert error">{{ error() }}</p>
+      }
 
-      Shop web address
+      <div class="wf-form-actions">
+        <button type="submit" class="wf-btn primary block" [disabled]="loading()">
+          {{ loading() ? 'Logging in…' : 'Log in' }}
+        </button>
+      </div>
+    </form>
 
-      <input name="tenantSlug" [(ngModel)]="tenantSlug" placeholder="acme-bakery" />
-
-    </label>
-
-  </p>
-
-  <p>The name from your shop link — e.g. payment.rns-apps.dk/acme-bakery. Leave blank for RNS platform staff.</p>
-
-  <p>
-
-    <label>
-
-      Email
-
-      <input name="email" type="email" [(ngModel)]="email" required />
-
-    </label>
-
-  </p>
-
-  <p>
-
-    <label>
-
-      Password
-
-      <input name="password" type="password" [(ngModel)]="password" required />
-
-    </label>
-
-  </p>
-
-  @if (error()) {
-
-    <p>{{ error() }}</p>
-
-  }
-
-  <p>
-
-    <button type="submit" [disabled]="loading()">Log in</button>
-
-  </p>
-
-</form>
-
-
-
-<p><a routerLink="/register">Create a new shop</a></p>
-
+    <p class="auth-footer"><a routerLink="/register">Create a new shop</a></p>
+  </div>
+</div>
