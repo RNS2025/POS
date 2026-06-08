@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import type { AuthResponse, LoginRequest, RegisterRequest } from '@shared/auth';
+import type { ChangePasswordRequest } from '@shared/admin-users';
 import type { AcceptInviteRequest, InvitePreview } from '@shared/invite';
 
 @Injectable({ providedIn: 'root' })
@@ -21,5 +22,9 @@ export class AuthService {
 
   acceptInvite(token: string, body: AcceptInviteRequest) {
     return this.http.post<AuthResponse>(`/api/v1/invites/${token}/accept`, body);
+  }
+
+  changePassword(body: ChangePasswordRequest) {
+    return this.http.post<AuthResponse>('/api/v1/auth/change-password', body);
   }
 }

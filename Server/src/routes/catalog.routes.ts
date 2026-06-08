@@ -17,12 +17,17 @@ import {
   updateKasseController,
   updateProductController,
 } from '../controllers/catalog.controller.js';
-import { requireAuth, requireTenantMatch } from '../middleware/auth.middleware.js';
+import { requireAuth, requirePasswordChanged, requireTenantMatch } from '../middleware/auth.middleware.js';
 import { resolveTenantFromSlug } from '../middleware/resolve-tenant.middleware.js';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
 
-const tenant = [requireAuth, resolveTenantFromSlug('tenantSlug'), requireTenantMatch('tenantSlug')];
+const tenant = [
+  requireAuth,
+  resolveTenantFromSlug('tenantSlug'),
+  requireTenantMatch('tenantSlug'),
+  requirePasswordChanged(),
+];
 
 export function registerCatalogRoutes(app: Express) {
   app.get('/api/v1/tenants/:tenantSlug/kasser', ...tenant, listKasserController);

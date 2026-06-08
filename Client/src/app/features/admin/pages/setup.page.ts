@@ -2,7 +2,9 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import type { SetupQuickpayRequest, SetupResponse, SetupVerifoneRequest } from '@shared/setup';
+import { hasPermission } from '@shared/permissions';
 import { SetupService } from '../../../core/services/setup.service';
+import { SessionService } from '../../../core/services/session.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 
 @Component({
@@ -13,6 +15,7 @@ import { apiErrorMessage } from '../../../core/utils/api-error';
 export class SetupPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly setupService = inject(SetupService);
+  private readonly session = inject(SessionService);
 
   protected merchantId = '';
   protected privateKey = '';
@@ -28,6 +31,11 @@ export class SetupPage implements OnInit {
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly savingVerifone = signal(false);
+
+  protected canWriteSetup(): boolean {
+    const role = this.session.user()?.role ?? '';
+    return hasPermission(role, 'setup:write');
+  }
 
   ngOnInit(): void {
     this.tenantSlug =

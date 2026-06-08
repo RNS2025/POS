@@ -70,7 +70,7 @@ export class ProductService {
   ) {}
 
   async list(auth: JwtPayload, tenant: { id: string; slug: string }, page = 1, limit = 20) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'catalog:read');
     const { items, total } = await this.products.listByTenant(tenant.id, page, limit);
     return {
       items: items.map((p) => toSummary(p, tenant.slug)),
@@ -82,7 +82,7 @@ export class ProductService {
   }
 
   async get(auth: JwtPayload, tenant: { id: string; slug: string }, id: string) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'catalog:read');
     const row = await prisma.product.findFirst({
       where: { id, tenantId: tenant.id },
       include: {
@@ -107,7 +107,7 @@ export class ProductService {
     body: Record<string, unknown>,
     file?: Express.Multer.File,
   ) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'catalog:write');
     const data = createSchema.parse({
       name: body.name,
       priceOre: body.priceOre !== undefined ? Number(body.priceOre) : undefined,
@@ -139,7 +139,7 @@ export class ProductService {
     body: Record<string, unknown>,
     file?: Express.Multer.File,
   ) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'catalog:write');
     const existing = await this.products.findById(tenant.id, id);
     if (!existing) {
       throw new AppError('Product not found.', 404);

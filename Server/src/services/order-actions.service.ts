@@ -75,7 +75,7 @@ export class OrderActionsService {
     tenant: { id: string; slug: string; quickpayConnectedAt: Date | null; verifoneConnectedAt: Date | null },
     orderId: string,
   ) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'orders:write');
 
     const order = await this.orders.findByIdForTenant(tenant.id, orderId);
     if (!order) {
@@ -246,7 +246,7 @@ export class OrderActionsService {
     input: unknown,
     idempotencyKey?: string,
   ) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'orders:write');
 
     if (idempotencyKey) {
       const existing = await this.paymentActions.findByIdempotencyKey(idempotencyKey);
@@ -363,7 +363,7 @@ export class OrderActionsService {
     tenant: { id: string; slug: string; verifoneConnectedAt: Date | null },
     orderId: string,
   ) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'orders:write');
 
     const order = await this.orders.findByIdForTenant(tenant.id, orderId);
     if (!order?.payment || order.channel !== 'terminal') {
@@ -427,7 +427,7 @@ export class OrderActionsService {
     tenant: { id: string; slug: string; verifoneConnectedAt: Date | null },
     orderId: string,
   ) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'orders:write');
 
     const order = await this.orders.findByIdForTenant(tenant.id, orderId);
     if (!order?.payment || order.channel !== 'terminal') {

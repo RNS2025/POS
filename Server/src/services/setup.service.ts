@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { AppError } from '../infra/app-error.js';
 import { decryptSecret, encryptSecret, maskSecret } from '../infra/crypto.js';
 import type { JwtPayload } from '../infra/jwt.js';
+import { requireMerchantPermission } from '../utils/require-permission.js';
 import type { ITenantQuickpayConfigRepository } from '../repositories/tenant-quickpay-config.repository.js';
 import { tenantQuickpayConfigRepository } from '../repositories/tenant-quickpay-config.repository.js';
 import type { ITenantVerifoneConfigRepository } from '../repositories/tenant-verifone-config.repository.js';
@@ -79,12 +80,12 @@ export class SetupService implements ISetupService {
   ) {}
 
   async getSetup(auth: JwtPayload, tenantSlug: string): Promise<SetupDto> {
-    const tenant = await this.requireMerchantAdmin(auth, tenantSlug);
+    const tenant = await this.requireTenantForSetup(auth, tenantSlug, 'setup:read');
     return this.toDto(tenant);
   }
 
   async saveQuickpay(auth: JwtPayload, tenantSlug: string, input: unknown): Promise<SetupDto> {
-    const tenant = await this.requireMerchantAdmin(auth, tenantSlug);
+    const tenant = await this.requireTenantForSetup(auth, tenantSlug, 'setup:write');
     await this.persistQuickpay(tenant.id, input);
     const updated = await this.tenants.findBySlug(tenant.slug);
     if (!updated) {
@@ -137,7 +138,7 @@ export class SetupService implements ISetupService {
   }
 
   async saveVerifone(auth: JwtPayload, tenantSlug: string, input: unknown): Promise<SetupDto> {
-    const tenant = await this.requireMerchantAdmin(auth, tenantSlug);
+    const tenant = await this.requireTenantForSetup(auth, tenantSlug, 'setup:write');
     const data = verifoneSchema.parse(input);
     const existing = await this.verifoneConfigs.findByTenantId(tenant.id);
 
@@ -176,7 +177,11 @@ export class SetupService implements ISetupService {
     return this.toDto(updated);
   }
 
-  private async requireMerchantAdmin(auth: JwtPayload, tenantSlug: string) {
+  private async requireTenantForSetup(
+    auth: JwtPayload,
+    tenantSlug: string,
+    permission: 'setup:read' | 'setup:write',
+  ) {
     const tenant = await this.tenants.findBySlug(tenantSlug);
     if (!tenant) {
       throw new AppError(
@@ -185,13 +190,7 @@ export class SetupService implements ISetupService {
       );
     }
 
-    if (auth.role !== 'admin' || auth.tenantId !== tenant.id || auth.tenantSlug !== tenant.slug) {
-      throw new AppError(
-        `You are logged in to a different shop. Log in with the web address "${tenantSlug}" to manage this shop.`,
-        403,
-      );
-    }
-
+    requireMerchantPermission(auth, tenant.id, tenant.slug, permission);
     return tenant;
   }
 

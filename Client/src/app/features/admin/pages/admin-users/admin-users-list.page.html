@@ -1,0 +1,51 @@
+<div class="page-title">
+  <h1>Admin users</h1>
+  <p>People who can log in to shop admin.</p>
+</div>
+
+<div class="wf-toolbar">
+  <a class="wf-btn primary" [routerLink]="['new']">New admin user</a>
+</div>
+
+<async-shell
+  [loading]="loading() && items().length === 0"
+  [error]="error()"
+  [empty]="!loading() && items().length === 0"
+  emptyMessage="No admin users yet."
+>
+  <table class="wf-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (u of items(); track u.id) {
+        <tr>
+          <td>
+            <a [routerLink]="[u.id]">{{ u.displayName }}</a>
+            @if (u.mustChangePassword) {
+              <span> — must change password</span>
+            }
+          </td>
+          <td>{{ u.email }}</td>
+          <td>{{ u.role }}</td>
+          <td>{{ u.isActive ? 'Active' : 'Inactive' }}</td>
+          <td>{{ u.createdAt | date: 'medium' }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <pos-paginator
+    [page]="page()"
+    [total]="total()"
+    [limit]="limit"
+    (prev)="prevPage()"
+    (next)="nextPage()"
+  />
+</async-shell>

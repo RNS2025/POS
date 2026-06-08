@@ -74,8 +74,9 @@ model User {
   role          String
   displayName   String?                @map("display_name")
   pinHash       String?                @map("pin_hash")
-  isActive      Boolean                @default(true) @map("is_active")
-  createdAt     DateTime               @default(now()) @map("created_at")
+  isActive           Boolean                @default(true) @map("is_active")
+  mustChangePassword Boolean                @default(false) @map("must_change_password")
+  createdAt          DateTime               @default(now()) @map("created_at")
   updatedAt     DateTime               @updatedAt @map("updated_at")
   tenant              Tenant?                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   platformNotes       PlatformMerchantNote[] @relation("PlatformNoteAuthor")

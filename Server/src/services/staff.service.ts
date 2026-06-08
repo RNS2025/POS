@@ -36,7 +36,7 @@ export class StaffService {
   constructor(private readonly staff: IStaffRepository = staffRepository) {}
 
   async list(auth: JwtPayload, tenant: { id: string; slug: string }, page: number, limit: number) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'staff:read');
     const safeLimit = Math.min(Math.max(limit, 1), 100);
     const safePage = Math.max(page, 1);
     const { items, total } = await this.staff.listByTenant(tenant.id, safePage, safeLimit);
@@ -50,7 +50,7 @@ export class StaffService {
   }
 
   async create(auth: JwtPayload, tenant: { id: string; slug: string }, input: unknown) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'staff:write');
     const data = createSchema.parse(input);
     const pinHash = await bcrypt.hash(data.pin, 12);
     const email = `staff.${randomUUID()}@${tenant.slug}.staff.local`;
@@ -64,7 +64,7 @@ export class StaffService {
   }
 
   async update(auth: JwtPayload, tenant: { id: string; slug: string }, staffId: string, input: unknown) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'staff:write');
     const data = updateSchema.parse(input);
     const patch: { displayName?: string; pinHash?: string; passwordHash?: string; isActive?: boolean } = {};
     if (data.displayName !== undefined) {

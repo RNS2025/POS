@@ -1,6 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
+import { isMerchantAdminRole } from '../domain/merchant-permissions.js';
 import { AppError } from '../infra/app-error.js';
 import { verifyToken, type JwtPayload } from '../infra/jwt.js';
+import { prisma } from '../infra/db.js';
 
 export interface AuthenticatedRequest extends Request {
   auth?: JwtPayload;
@@ -36,7 +38,7 @@ export function requireTenantMatch(paramName = 'tenantSlug') {
       return;
     }
 
-    if (auth.role !== 'admin' || auth.tenantSlug !== slug) {
+    if (!isMerchantAdminRole(auth.role) || auth.tenantSlug !== slug) {
       next(
         new AppError(
           `You are logged in to "${auth.tenantSlug ?? 'another shop'}", not "${slug}". ` +
@@ -44,6 +46,28 @@ export function requireTenantMatch(paramName = 'tenantSlug') {
           403,
         ),
       );
+      return;
+    }
+
+    next();
+  };
+}
+
+export function requirePasswordChanged() {
+  return async (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
+    const auth = req.auth;
+    if (!auth || auth.role === 'platform_admin' || !isMerchantAdminRole(auth.role)) {
+      next();
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: auth.sub },
+      select: { mustChangePassword: true },
+    });
+
+    if (user?.mustChangePassword) {
+      next(new AppError('Change your password before continuing.', 403, { code: 'must_change_password' }));
       return;
     }
 

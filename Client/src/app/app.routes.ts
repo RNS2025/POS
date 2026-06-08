@@ -1,7 +1,12 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { merchantPermissionGuard } from './core/guards/merchant-permission.guard';
+import { changePasswordOnlyGuard, mustChangePasswordGuard } from './core/guards/must-change-password.guard';
 import { platformAdminGuard } from './core/guards/platform-admin.guard';
 import { tenantSlugGuard } from './core/guards/tenant-slug.guard';
+import { AdminUserFormPage } from './features/admin/pages/admin-users/admin-user-form.page';
+import { AdminUsersListPage } from './features/admin/pages/admin-users/admin-users-list.page';
+import { ChangePasswordPage } from './features/admin/pages/change-password/change-password.page';
 import { OrderDetailPage } from './features/admin/pages/orders/order-detail.page';
 import { OrdersListPage } from './features/admin/pages/orders/orders-list.page';
 import { SetupPage } from './features/admin/pages/setup.page';
@@ -89,23 +94,47 @@ export const routes: Routes = [
   {
     path: ':tenantSlug/admin',
     component: AdminLayoutComponent,
-    canActivate: [authGuard, tenantSlugGuard],
+    canActivate: [authGuard, tenantSlugGuard, mustChangePasswordGuard],
     children: [
-      { path: 'products', component: ProductsListPage },
-      { path: 'products/new', component: ProductFormPage },
-      { path: 'products/:productId', component: ProductFormPage },
-      { path: 'categories', component: CategoriesListPage },
-      { path: 'categories/new', component: CategoryFormPage },
-      { path: 'categories/:categoryId', component: CategoryFormPage },
-      { path: 'kasser', component: KasserListPage },
-      { path: 'kasser/new', component: KasseFormPage },
-      { path: 'kasser/:kasseId', component: KasseFormPage },
-      { path: 'staff', component: StaffListPage },
-      { path: 'staff/new', component: StaffFormPage },
-      { path: 'staff/:staffId', component: StaffFormPage },
-      { path: 'orders', component: OrdersListPage },
-      { path: 'orders/:orderId', component: OrderDetailPage },
-      { path: 'setup', component: SetupPage },
+      {
+        path: 'change-password',
+        component: ChangePasswordPage,
+        canActivate: [changePasswordOnlyGuard],
+      },
+      { path: 'products', component: ProductsListPage, canActivate: [merchantPermissionGuard('catalog:read')] },
+      {
+        path: 'products/new',
+        component: ProductFormPage,
+        canActivate: [merchantPermissionGuard('catalog:write')],
+      },
+      {
+        path: 'products/:productId',
+        component: ProductFormPage,
+        canActivate: [merchantPermissionGuard('catalog:read')],
+      },
+      { path: 'categories', component: CategoriesListPage, canActivate: [merchantPermissionGuard('categories:read')] },
+      {
+        path: 'categories/new',
+        component: CategoryFormPage,
+        canActivate: [merchantPermissionGuard('categories:write')],
+      },
+      {
+        path: 'categories/:categoryId',
+        component: CategoryFormPage,
+        canActivate: [merchantPermissionGuard('categories:read')],
+      },
+      { path: 'kasser', component: KasserListPage, canActivate: [merchantPermissionGuard('kasser:read')] },
+      { path: 'kasser/new', component: KasseFormPage, canActivate: [merchantPermissionGuard('kasser:write')] },
+      { path: 'kasser/:kasseId', component: KasseFormPage, canActivate: [merchantPermissionGuard('kasser:read')] },
+      { path: 'staff', component: StaffListPage, canActivate: [merchantPermissionGuard('staff:read')] },
+      { path: 'staff/new', component: StaffFormPage, canActivate: [merchantPermissionGuard('staff:write')] },
+      { path: 'staff/:staffId', component: StaffFormPage, canActivate: [merchantPermissionGuard('staff:read')] },
+      { path: 'orders', component: OrdersListPage, canActivate: [merchantPermissionGuard('orders:read')] },
+      { path: 'orders/:orderId', component: OrderDetailPage, canActivate: [merchantPermissionGuard('orders:read')] },
+      { path: 'setup', component: SetupPage, canActivate: [merchantPermissionGuard('setup:read')] },
+      { path: 'users', component: AdminUsersListPage, canActivate: [merchantPermissionGuard('users:read')] },
+      { path: 'users/new', component: AdminUserFormPage, canActivate: [merchantPermissionGuard('users:write')] },
+      { path: 'users/:userId', component: AdminUserFormPage, canActivate: [merchantPermissionGuard('users:read')] },
       { path: '', redirectTo: 'products', pathMatch: 'full' },
     ],
   },

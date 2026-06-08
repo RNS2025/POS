@@ -34,7 +34,7 @@ export class KasseService {
     tenant: { id: string; slug: string; verifoneConnectedAt: Date | null },
     input: unknown,
   ) {
-    requireStaff(auth, tenant.id, tenant.slug, 'You must be logged in as shop staff to use the kasse.');
+    requireStaff(auth, tenant.id, tenant.slug, 'orders:write', 'You must be logged in as shop staff to use the kasse.');
 
     const data = saleSchema.parse(input);
     const vfConfig = await this.verifoneConfigs.findByTenantId(tenant.id);
@@ -99,7 +99,7 @@ export class KasseService {
   }
 
   async getSale(auth: JwtPayload, tenant: { id: string; slug: string }, orderId: string) {
-    requireStaff(auth, tenant.id, tenant.slug, 'You must be logged in as shop staff to use the kasse.');
+    requireStaff(auth, tenant.id, tenant.slug, 'orders:write', 'You must be logged in as shop staff to use the kasse.');
 
     const order = await this.orders.findByIdForTenant(tenant.id, orderId);
     if (!order || order.channel !== 'terminal') {

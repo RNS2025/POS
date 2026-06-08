@@ -5,6 +5,7 @@ import type { InvitePreview } from '@shared/invite';
 import { AuthService } from '../../../core/services/auth.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 import { SessionService } from '../../../core/services/session.service';
+import { navigateAfterMerchantLogin } from '../../../core/utils/merchant-login-nav';
 
 @Component({
   selector: 'app-invite-page',
@@ -49,10 +50,14 @@ export class InvitePage implements OnInit {
     this.submitting.set(true);
 
     this.auth.acceptInvite(this.token, { password: this.password }).subscribe({
-      next: (res) => {
-        this.session.setSession(res.token, res.user);
-        void this.router.navigate(['/', res.user.tenantSlug, 'admin', 'setup']);
-      },
+        next: (res) => {
+          this.session.setSession(res.token, res.user);
+          if (res.user.tenantSlug) {
+            void this.router.navigate(['/', res.user.tenantSlug, 'admin', 'setup']);
+          } else {
+            navigateAfterMerchantLogin(this.router, res.user);
+          }
+        },
       error: (err) => {
         this.error.set(apiErrorMessage(err, 'Could not complete your invite. Try again or contact RNS support.'));
         this.submitting.set(false);

@@ -4,16 +4,24 @@ import type { AuthUser } from '@shared/auth';
 const TOKEN_KEY = 'pos_auth_token';
 const USER_KEY = 'pos_auth_user';
 
+function normalizeUser(raw: AuthUser): AuthUser {
+  return {
+    ...raw,
+    mustChangePassword: raw.mustChangePassword ?? false,
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class SessionService {
   readonly token = signal<string | null>(this.readToken());
   readonly user = signal<AuthUser | null>(this.readUser());
 
   setSession(token: string, user: AuthUser): void {
+    const normalized = normalizeUser(user);
     localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    localStorage.setItem(USER_KEY, JSON.stringify(normalized));
     this.token.set(token);
-    this.user.set(user);
+    this.user.set(normalized);
   }
 
   clearSession(): void {
@@ -37,7 +45,7 @@ export class SessionService {
       return null;
     }
     try {
-      return JSON.parse(raw) as AuthUser;
+      return normalizeUser(JSON.parse(raw) as AuthUser);
     } catch {
       return null;
     }

@@ -34,7 +34,7 @@ export class CategoryService {
   constructor(private readonly categories: ICategoryRepository = categoryRepository) {}
 
   async list(auth: JwtPayload, tenant: { id: string; slug: string }, page = 1, limit = 50) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'categories:read');
     const { items, total } = await this.categories.listByTenant(tenant.id, page, limit);
     const summaries = await Promise.all(
       items.map((c) => toSummary(c, this.categories, tenant.id)),
@@ -43,7 +43,7 @@ export class CategoryService {
   }
 
   async get(auth: JwtPayload, tenant: { id: string; slug: string }, id: string) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'categories:read');
     const c = await this.categories.findById(tenant.id, id);
     if (!c) {
       throw new AppError('Category not found.', 404);
@@ -52,14 +52,14 @@ export class CategoryService {
   }
 
   async create(auth: JwtPayload, tenant: { id: string; slug: string }, body: unknown) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'categories:write');
     const data = createSchema.parse(body);
     const c = await this.categories.create(tenant.id, data);
     return toSummary(c, this.categories, tenant.id);
   }
 
   async update(auth: JwtPayload, tenant: { id: string; slug: string }, id: string, body: unknown) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'categories:write');
     const data = updateSchema.parse(body);
     const c = await this.categories.update(tenant.id, id, data);
     if (!c) {
@@ -69,7 +69,7 @@ export class CategoryService {
   }
 
   async delete(auth: JwtPayload, tenant: { id: string; slug: string }, id: string) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'categories:write');
     const count = await this.categories.countProducts(tenant.id, id);
     if (count > 0) {
       throw new AppError('Cannot delete category with products. Deactivate instead.', 409);

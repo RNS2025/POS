@@ -77,7 +77,7 @@ export class KasserService {
   constructor(private readonly kasser: IKasseRepository = kasseRepository) {}
 
   async list(auth: JwtPayload, tenant: { id: string; slug: string }, page = 1, limit = 20) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'kasser:read');
     const { items, total } = await this.kasser.listByTenant(tenant.id, page, limit);
     const summaries = await Promise.all(
       items.map(async (k) => toSummary(k, await this.kasser.countProducts(tenant.id, k.id))),
@@ -86,7 +86,7 @@ export class KasserService {
   }
 
   async get(auth: JwtPayload, tenant: { id: string; slug: string }, id: string) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'kasser:read');
     const k = await this.kasser.findById(tenant.id, id);
     if (!k) {
       throw new AppError('Kasse not found.', 404);
@@ -96,7 +96,7 @@ export class KasserService {
   }
 
   async create(auth: JwtPayload, tenant: { id: string; slug: string }, body: unknown) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'kasser:write');
     const data = createSchema.parse(body);
     if (data.type === 'kiosk') {
       assertKioskPaymentMethods({ type: 'kiosk', verifonePoiId: data.verifonePoiId });
@@ -115,7 +115,7 @@ export class KasserService {
   }
 
   async update(auth: JwtPayload, tenant: { id: string; slug: string }, id: string, body: unknown) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'kasser:write');
     const data = updateSchema.parse(body);
     const current = await this.kasser.findById(tenant.id, id);
     if (!current) {
@@ -149,7 +149,7 @@ export class KasserService {
     id: string,
     body: unknown,
   ) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'kasser:write');
     const data = productsSchema.parse(body);
     const k = await this.kasser.findById(tenant.id, id);
     if (!k) {

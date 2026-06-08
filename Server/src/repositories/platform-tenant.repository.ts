@@ -16,7 +16,7 @@ export interface TenantListParams {
 const tenantListInclude = {
   quickpayConfig: true,
   users: {
-    where: { role: 'admin' },
+    where: { role: 'owner' },
     take: 1,
     orderBy: { createdAt: 'asc' as const },
     select: { email: true },
@@ -32,7 +32,7 @@ const tenantListInclude = {
 const tenantDetailInclude = {
   quickpayConfig: true,
   users: {
-    where: { role: 'admin' },
+    where: { role: 'owner' },
     orderBy: { createdAt: 'asc' as const },
     select: { id: true, email: true, role: true, createdAt: true },
   },
@@ -115,7 +115,7 @@ export class PlatformTenantRepository implements IPlatformTenantRepository {
       where.OR = [
         { name: { contains: q, mode: 'insensitive' } },
         { slug: { contains: q, mode: 'insensitive' } },
-        { users: { some: { email: { contains: q, mode: 'insensitive' }, role: 'admin' } } },
+        { users: { some: { email: { contains: q, mode: 'insensitive' }, role: 'owner' } } },
       ];
     }
 

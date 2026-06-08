@@ -1,16 +1,14 @@
 import type { JwtPayload } from '../infra/jwt.js';
-import { AppError } from '../infra/app-error.js';
+import type { AdminPermission } from '../domain/merchant-permissions.js';
+import { requireMerchantPermission } from './require-permission.js';
 
+/** @deprecated Use requireMerchantPermission with a specific permission. */
 export function requireStaff(
   auth: JwtPayload,
   tenantId: string,
   tenantSlug: string,
-  message = 'You must be logged in as shop staff.',
+  permission: AdminPermission = 'staff:write',
+  message = 'You must be logged in as shop staff admin.',
 ): void {
-  if (auth.role === 'platform_admin') {
-    return;
-  }
-  if (auth.role !== 'admin' || auth.tenantId !== tenantId || auth.tenantSlug !== tenantSlug) {
-    throw new AppError(message, 403);
-  }
+  requireMerchantPermission(auth, tenantId, tenantSlug, permission);
 }

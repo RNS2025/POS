@@ -1,4 +1,6 @@
-export type UserRole = 'admin' | 'platform_admin';
+export type MerchantAdminRole = 'owner' | 'manager' | 'viewer';
+
+export type UserRole = MerchantAdminRole | 'platform_admin' | 'staff';
 
 export interface RegisterRequest {
   shopName: string;
@@ -19,6 +21,7 @@ export interface AuthUser {
   role: UserRole;
   tenantId: string | null;
   tenantSlug: string | null;
+  mustChangePassword: boolean;
 }
 
 export interface AuthResponse {

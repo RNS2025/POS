@@ -1,7 +1,9 @@
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { isMerchantAdminRole } from '../domain/merchant-permissions.js';
 import { AppError } from '../infra/app-error.js';
 import { signToken } from '../infra/jwt.js';
+import type { JwtPayload } from '../infra/jwt.js';
 import type { ITenantInviteRepository } from '../repositories/tenant-invite.repository.js';
 import { tenantInviteRepository } from '../repositories/tenant-invite.repository.js';
 import type { ITenantRepository } from '../repositories/tenant.repository.js';
@@ -27,11 +29,17 @@ const acceptInviteSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password is too long'),
 });
 
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Enter your current password'),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password is too long'),
+});
+
 export interface IAuthService {
   register(input: unknown): Promise<{ token: string; user: AuthUserDto }>;
   login(input: unknown): Promise<{ token: string; user: AuthUserDto }>;
   getInvite(token: string): Promise<InvitePreviewDto>;
   acceptInvite(token: string, input: unknown): Promise<{ token: string; user: AuthUserDto }>;
+  changePassword(auth: JwtPayload, input: unknown): Promise<{ token: string; user: AuthUserDto }>;
 }
 
 export interface AuthUserDto {
@@ -40,6 +48,7 @@ export interface AuthUserDto {
   role: string;
   tenantId: string | null;
   tenantSlug: string | null;
+  mustChangePassword: boolean;
 }
 
 export interface InvitePreviewDto {
@@ -79,8 +88,10 @@ export class AuthService implements IAuthService {
     const user = await this.users.create({
       email: data.email.toLowerCase(),
       passwordHash,
-      role: 'admin',
+      role: 'owner',
       tenantId: tenant.id,
+      displayName: data.email.split('@')[0] ?? 'Owner',
+      mustChangePassword: false,
     });
 
     const token = signToken({
@@ -109,7 +120,7 @@ export class AuthService implements IAuthService {
       }
 
       const user = await this.users.findByEmailAndTenant(data.email.toLowerCase(), tenant.id);
-      if (!user || user.role !== 'admin' || !user.isActive) {
+      if (!user || !isMerchantAdminRole(user.role) || !user.isActive) {
         throw new AppError(
           `No admin account with email ${data.email} for shop "${data.tenantSlug}". Check the email or create a shop first.`,
           401,
@@ -152,6 +163,38 @@ export class AuthService implements IAuthService {
     });
 
     return { token, user: this.toUserDto(user, null) };
+  }
+
+  async changePassword(auth: JwtPayload, input: unknown) {
+    const data = changePasswordSchema.parse(input);
+    if (!isMerchantAdminRole(auth.role)) {
+      throw new AppError('Only shop admin accounts can change password here.', 403);
+    }
+
+    const user = await this.users.findById(auth.sub);
+    if (!user || !user.isActive) {
+      throw new AppError('Your account could not be found.', 404);
+    }
+
+    const valid = await bcrypt.compare(data.currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new AppError('Current password is incorrect.', 401);
+    }
+
+    const passwordHash = await bcrypt.hash(data.newPassword, 12);
+    const updated = await this.users.updatePassword(user.id, passwordHash, false);
+
+    const token = signToken({
+      sub: updated.id,
+      role: updated.role,
+      tenantId: updated.tenantId,
+      tenantSlug: auth.tenantSlug,
+    });
+
+    return {
+      token,
+      user: this.toUserDto(updated, auth.tenantSlug),
+    };
   }
 
   async getInvite(token: string) {
@@ -202,8 +245,10 @@ export class AuthService implements IAuthService {
     const user = await this.users.create({
       email: invite.email,
       passwordHash,
-      role: 'admin',
+      role: 'owner',
       tenantId: invite.tenantId,
+      displayName: invite.email.split('@')[0] ?? 'Owner',
+      mustChangePassword: false,
     });
 
     await this.invites.markUsed(invite.id);
@@ -222,7 +267,13 @@ export class AuthService implements IAuthService {
   }
 
   private toUserDto(
-    user: { id: string; email: string; role: string; tenantId: string | null },
+    user: {
+      id: string;
+      email: string;
+      role: string;
+      tenantId: string | null;
+      mustChangePassword?: boolean;
+    },
     tenantSlug: string | null,
   ): AuthUserDto {
     return {
@@ -231,6 +282,7 @@ export class AuthService implements IAuthService {
       role: user.role,
       tenantId: user.tenantId,
       tenantSlug,
+      mustChangePassword: user.mustChangePassword ?? false,
     };
   }
 }

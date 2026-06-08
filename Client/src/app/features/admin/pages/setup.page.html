@@ -61,17 +61,21 @@
       @if (error()) {
         <p class="wf-alert error">{{ error() }}</p>
       }
-      <div class="wf-form-actions">
-        <button type="submit" class="wf-btn primary" [disabled]="saving()">
-          {{
-            saving()
-              ? 'Testing…'
-              : s.quickpay
-                ? 'Test connection'
-                : 'Save and test connection'
-          }}
-        </button>
-      </div>
+      @if (canWriteSetup()) {
+        <div class="wf-form-actions">
+          <button type="submit" class="wf-btn primary" [disabled]="saving()">
+            {{
+              saving()
+                ? 'Testing…'
+                : s.quickpay
+                  ? 'Test connection'
+                  : 'Save and test connection'
+            }}
+          </button>
+        </div>
+      } @else {
+        <p>Only Owners can change payment setup.</p>
+      }
     </form>
   </section>
 
@@ -138,15 +142,19 @@
         Use Verifone simulator (recommended for testing)
       </label>
       <div class="wf-form-actions">
-        <button type="submit" class="wf-btn primary" [disabled]="savingVerifone()">
-          {{
-            savingVerifone()
-              ? 'Testing…'
-              : s.verifone
-                ? 'Test Verifone connection'
-                : 'Save and test Verifone'
-          }}
-        </button>
+        @if (canWriteSetup()) {
+          <button type="submit" class="wf-btn primary" [disabled]="savingVerifone()">
+            {{
+              savingVerifone()
+                ? 'Testing…'
+                : s.verifone
+                  ? 'Test Verifone connection'
+                  : 'Save and test Verifone'
+            }}
+          </button>
+        } @else {
+          <p>Only Owners can change payment setup.</p>
+        }
       </div>
     </form>
   </section>

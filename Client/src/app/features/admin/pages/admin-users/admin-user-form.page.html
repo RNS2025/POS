@@ -1,0 +1,63 @@
+<div class="page-title">
+  <h1>{{ isEdit ? 'Edit admin user' : 'New admin user' }}</h1>
+</div>
+
+@if (loading()) {
+  <p class="wf-loading">Loading…</p>
+}
+
+@if (error()) {
+  <p class="wf-alert error">{{ error() }}</p>
+}
+
+@if (!loading()) {
+  <form class="wf-form" (ngSubmit)="save()">
+    @if (!isEdit) {
+      <label>
+        Email
+        <input type="email" name="email" [(ngModel)]="email" required autocomplete="off" />
+      </label>
+      <label>
+        Temporary password
+        <input type="password" name="temporaryPassword" [(ngModel)]="temporaryPassword" required minlength="8" autocomplete="new-password" />
+      </label>
+    } @else {
+      <p><strong>Email:</strong> {{ email }}</p>
+    }
+
+    <label>
+      Display name
+      <input type="text" name="displayName" [(ngModel)]="displayName" required maxlength="80" />
+    </label>
+
+    <label>
+      Role
+      <select name="role" [(ngModel)]="role">
+        <option value="owner">Owner</option>
+        <option value="manager">Manager</option>
+        <option value="viewer">Viewer</option>
+      </select>
+    </label>
+
+    @if (isEdit) {
+      <label>
+        <input type="checkbox" name="isActive" [(ngModel)]="isActive" />
+        Active
+      </label>
+    }
+
+    <form-actions [saving]="saving()" saveLabel="Save" />
+  </form>
+
+  @if (isEdit) {
+    <section class="wf-panel">
+      <h2>Reset password</h2>
+      <p>Set a new temporary password. The user must change it on next login.</p>
+      <label>
+        Temporary password
+        <input type="password" name="resetPassword" [(ngModel)]="resetPassword" minlength="8" autocomplete="new-password" />
+      </label>
+      <button type="button" (click)="resetTempPassword()" [disabled]="saving()">Set temporary password</button>
+    </section>
+  }
+}

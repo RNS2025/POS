@@ -30,7 +30,7 @@ export class OrdersService {
       q?: string;
     },
   ) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'orders:read');
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -67,7 +67,7 @@ export class OrdersService {
   }
 
   async getDetail(auth: JwtPayload, tenant: { id: string; slug: string }, orderId: string) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'orders:read');
 
     const order = await this.orders.findDetailForTenant(tenant.id, orderId);
     if (!order) {
@@ -112,7 +112,7 @@ export class OrdersService {
   }
 
   async syncStatus(auth: JwtPayload, tenant: { id: string; slug: string }, orderId: string) {
-    requireStaff(auth, tenant.id, tenant.slug);
+    requireStaff(auth, tenant.id, tenant.slug, 'orders:write');
     const result = await quickpaySyncService.syncOrderFromQuickpay(tenant.id, orderId, {
       force: true,
     });

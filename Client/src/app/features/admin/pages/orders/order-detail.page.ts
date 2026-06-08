@@ -5,7 +5,9 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { CopyFieldComponent } from '../../../../shared/components/copy-field/copy-field.component';
 import { PosButtonComponent } from '../../../../shared/components/pos-button/pos-button.component';
+import { hasPermission } from '@shared/permissions';
 import { OrdersService } from '../../../../core/services/orders.service';
+import { SessionService } from '../../../../core/services/session.service';
 import { apiErrorMessage } from '../../../../core/utils/api-error';
 import type { OrderDetailResponse, PaymentActionType, RetryOrderResponse, SyncOrderStatusResponse } from '@shared/orders';
 
@@ -25,6 +27,7 @@ import type { OrderDetailResponse, PaymentActionType, RetryOrderResponse, SyncOr
 export class OrderDetailPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly ordersApi = inject(OrdersService);
+  private readonly session = inject(SessionService);
 
   protected tenantSlug = '';
   protected orderId = '';
@@ -81,7 +84,15 @@ export class OrderDetailPage implements OnInit {
   }
 
   protected hasAction(action: PaymentActionType): boolean {
+    if (!this.canWriteOrders()) {
+      return false;
+    }
     return this.order()?.allowedActions.includes(action) ?? false;
+  }
+
+  protected canWriteOrders(): boolean {
+    const role = this.session.user()?.role ?? '';
+    return hasPermission(role, 'orders:write');
   }
 
   protected retry(): void {
@@ -135,6 +146,9 @@ export class OrderDetailPage implements OnInit {
   }
 
   protected canSyncStatus(): boolean {
+    if (!this.canWriteOrders()) {
+      return false;
+    }
     const o = this.order();
     if (!o || o.channel !== 'online') {
       return false;

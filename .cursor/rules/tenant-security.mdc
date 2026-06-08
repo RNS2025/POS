@@ -18,7 +18,7 @@ Also follow **Security & tenancy** in `keep-code-simple.mdc` and payment rules i
 
 | Source | Use for tenant authorization? |
 |--------|-------------------------------|
-| JWT `tenantId` (merchant `admin`) | **Yes** — must match URL `/{slug}` |
+| JWT `tenantId` (merchant admin roles) | **Yes** — must match URL `/{slug}` |
 | URL `/{slug}` (shop / public checkout) | **Yes** — resolve slug → `tenant_id` server-side |
 | Request body `tenantId` | **No** — never use alone for auth |
 | Quickpay webhook `merchant_id` | **Yes** — must match `tenant_quickpay_config` for that tenant |
@@ -65,6 +65,8 @@ Quickpay adapter: accept `tenantId`; load credentials **inside** the adapter —
 | `resolveTenantFromSlug` | Public `{slug}` routes |
 | `requireAuth` | Valid JWT |
 | `requireTenantMatch` | JWT `tenantId` matches resolved slug tenant |
+| `requirePermission` | Merchant role has required permission for route |
+| `requirePasswordChanged` | Block merchant APIs until temp password changed |
 | `requirePlatformAdmin` | `/platform/*` and `/api/v1/platform/*` |
 
 ---
@@ -73,8 +75,13 @@ Quickpay adapter: accept `tenantId`; load credentials **inside** the adapter —
 
 | Role | Scope |
 |------|--------|
-| `admin` | One tenant — `/{slug}/admin/*` |
+| `owner` | Full tenant admin — setup, orders/money actions, user management |
+| `manager` | Catalog, kasser, staff PINs, orders read — no setup write, no user admin, no refunds |
+| `viewer` | Read-only catalog, kasser, staff, orders |
+| `staff` | Kasse PIN only — no admin portal |
 | `platform_admin` | RNS staff — `/platform/*` only |
+
+Merchant admin permissions are defined in `Shared/types/permissions.ts` and enforced server-side via `requirePermission`. Client nav/route guards mirror the same matrix.
 
 Platform users are RNS staff, not merchant users. Do not merge platform and merchant auth paths without explicit impersonation (v2 + audit).
 

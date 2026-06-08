@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 import { SessionService } from '../../../core/services/session.service';
+import { navigateAfterMerchantLogin } from '../../../core/utils/merchant-login-nav';
 
 @Component({
   selector: 'app-login-page',
@@ -34,11 +35,7 @@ export class LoginPage {
       .subscribe({
         next: (res) => {
           this.session.setSession(res.token, res.user);
-          if (res.user.tenantSlug) {
-            void this.router.navigate(['/', res.user.tenantSlug, 'admin', 'setup']);
-          } else {
-            void this.router.navigate(['/platform', 'merchants']);
-          }
+          navigateAfterMerchantLogin(this.router, res.user);
         },
         error: (err) => {
           this.error.set(apiErrorMessage(err, 'Could not log you in. Check your shop web address, email, and password.'));

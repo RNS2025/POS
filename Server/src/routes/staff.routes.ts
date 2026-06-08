@@ -4,10 +4,15 @@ import {
   listStaffController,
   updateStaffController,
 } from '../controllers/staff.controller.js';
-import { requireAuth, requireTenantMatch } from '../middleware/auth.middleware.js';
+import { requireAuth, requirePasswordChanged, requireTenantMatch } from '../middleware/auth.middleware.js';
 import { resolveTenantFromSlug } from '../middleware/resolve-tenant.middleware.js';
 
-const tenant = [requireAuth, resolveTenantFromSlug('tenantSlug'), requireTenantMatch('tenantSlug')];
+const tenant = [
+  requireAuth,
+  resolveTenantFromSlug('tenantSlug'),
+  requireTenantMatch('tenantSlug'),
+  requirePasswordChanged(),
+];
 
 export function registerStaffRoutes(app: Express) {
   app.get('/api/v1/tenants/:tenantSlug/staff', ...tenant, listStaffController);

@@ -36,7 +36,7 @@ async function main() {
         create: {
           email,
           passwordHash,
-          role: 'admin',
+          role: 'owner',
         },
       },
     },
