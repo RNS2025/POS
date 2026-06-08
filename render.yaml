@@ -9,7 +9,6 @@ services:
     runtime: node
     rootDir: Server
     plan: free
-    region: frankfurt
     healthCheckPath: /api/health
     buildCommand: npm ci --include=dev && npx prisma generate && npm run build
     startCommand: npm run start:render
