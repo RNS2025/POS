@@ -1,0 +1,55 @@
+<div class="page-title">
+  <h1>{{ isEdit ? 'Edit staff' : 'Add staff' }}</h1>
+</div>
+
+@if (error()) {
+  <p class="wf-alert error">{{ error() }}</p>
+}
+
+@if (!loading()) {
+  <form class="wf-form" (ngSubmit)="save()">
+    <label>
+      Display name
+      <input name="displayName" [(ngModel)]="displayName" required maxlength="80" />
+    </label>
+    <label>
+      PIN (4–6 digits)
+      <input
+        name="pin"
+        [(ngModel)]="pin"
+        [required]="!isEdit"
+        inputmode="numeric"
+        pattern="\d{4,6}"
+        maxlength="6"
+        autocomplete="off"
+      />
+    </label>
+    @if (isEdit) {
+      <label>
+        <input type="checkbox" name="isActive" [(ngModel)]="isActive" />
+        Active
+      </label>
+    }
+    <form-actions
+      [saving]="saving()"
+      [cancelLink]="['/', tenantSlug, 'admin', 'staff']"
+      saveLabel="Save"
+    />
+  </form>
+
+  @if (isEdit && isActive) {
+    <p>
+      <button type="button" class="wf-btn danger" (click)="confirmDeactivate.set(true)">Deactivate</button>
+    </p>
+  }
+}
+
+<confirm-dialog
+  [open]="confirmDeactivate()"
+  title="Deactivate staff?"
+  message="This person will no longer be able to sign in with their PIN."
+  confirmLabel="Deactivate"
+  variant="danger"
+  (confirm)="deactivate()"
+  (cancel)="confirmDeactivate.set(false)"
+/>

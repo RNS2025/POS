@@ -41,6 +41,13 @@ import { LogoutLink } from '../../core/components/logout-link';
             Kasser
           </a>
           <a
+            [routerLink]="['/', tenantSlug, 'admin', 'staff']"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: false }"
+          >
+            Staff
+          </a>
+          <a
             [routerLink]="['/', tenantSlug, 'admin', 'orders']"
             routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: false }"

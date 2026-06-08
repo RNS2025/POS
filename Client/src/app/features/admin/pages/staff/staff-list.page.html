@@ -1,0 +1,39 @@
+<div class="page-title">
+  <h1>Staff</h1>
+  <p>Floor staff who sign in with a PIN on register iPads.</p>
+</div>
+
+<div class="wf-toolbar">
+  <a class="wf-btn primary" [routerLink]="['/', tenantSlug, 'admin', 'staff', 'new']">Add staff</a>
+</div>
+
+<async-shell [loading]="loading()" [error]="error()" [empty]="!loading() && items().length === 0" emptyMessage="No staff yet.">
+  <p class="wf-hint">{{ total() }} staff member(s)</p>
+  <table class="wf-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>PIN</th>
+        <th>Status</th>
+        <th>Added</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (s of items(); track s.id) {
+        <tr>
+          <td><a [routerLink]="['/', tenantSlug, 'admin', 'staff', s.id]">{{ s.displayName }}</a></td>
+          <td>{{ s.hasPin ? '••••' : '—' }}</td>
+          <td>{{ s.isActive ? 'Active' : 'Inactive' }}</td>
+          <td>{{ s.createdAt | date: 'mediumDate' }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  <pos-paginator
+    [page]="page()"
+    [total]="total()"
+    [hasMore]="page() * limit < total()"
+    (prev)="prevPage()"
+    (next)="nextPage()"
+  />
+</async-shell>

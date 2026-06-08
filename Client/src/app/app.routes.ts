@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { platformAdminGuard } from './core/guards/platform-admin.guard';
 import { tenantSlugGuard } from './core/guards/tenant-slug.guard';
-import { verifoneConnectedGuard } from './core/guards/verifone-connected.guard';
 import { OrderDetailPage } from './features/admin/pages/orders/order-detail.page';
 import { OrdersListPage } from './features/admin/pages/orders/orders-list.page';
 import { SetupPage } from './features/admin/pages/setup.page';
@@ -22,7 +21,12 @@ import { CreateMerchantPage } from './features/platform/pages/create-merchant.pa
 import { MerchantsListPage } from './features/platform/pages/merchants-list.page';
 import { MerchantDetailPage } from './features/platform/pages/merchant-detail.page';
 import { RegisterPage } from './features/register/pages/register.page';
-import { KassePage } from './features/kasse/pages/kasse.page';
+import { KasseLayoutComponent } from './layouts/kasse-layout/kasse-layout.component';
+import { KasseQrPage } from './features/kasse/pages/kasse-qr.page';
+import { KasseReceiptPage } from './features/kasse/pages/kasse-receipt.page';
+import { KasseRegisterPage } from './features/kasse/pages/kasse-register.page';
+import { StaffFormPage } from './features/admin/pages/staff/staff-form.page';
+import { StaffListPage } from './features/admin/pages/staff/staff-list.page';
 import { HomePage } from './features/shop/pages/home.page';
 import { KioskLayoutComponent } from './layouts/kiosk-layout/kiosk-layout.component';
 import { KioskCancelPage } from './features/kiosk/pages/kiosk-cancel.page';
@@ -74,9 +78,13 @@ export const routes: Routes = [
     ],
   },
   {
-    path: ':tenantSlug/kasse',
-    component: KassePage,
-    canActivate: [authGuard, tenantSlugGuard, verifoneConnectedGuard],
+    path: ':tenantSlug/kasse/:kasseSlug',
+    component: KasseLayoutComponent,
+    children: [
+      { path: 'pay/qr', component: KasseQrPage },
+      { path: 'receipt', component: KasseReceiptPage },
+      { path: '', component: KasseRegisterPage },
+    ],
   },
   {
     path: ':tenantSlug/admin',
@@ -92,6 +100,9 @@ export const routes: Routes = [
       { path: 'kasser', component: KasserListPage },
       { path: 'kasser/new', component: KasseFormPage },
       { path: 'kasser/:kasseId', component: KasseFormPage },
+      { path: 'staff', component: StaffListPage },
+      { path: 'staff/new', component: StaffFormPage },
+      { path: 'staff/:staffId', component: StaffFormPage },
       { path: 'orders', component: OrdersListPage },
       { path: 'orders/:orderId', component: OrderDetailPage },
       { path: 'setup', component: SetupPage },

@@ -1,0 +1,101 @@
+@if (!hasSession()) {
+  <div class="wf-content">
+    <div class="page-title">
+      <h1>Enter PIN</h1>
+      <p>Staff register — sign in to start selling.</p>
+    </div>
+    @if (error()) {
+      <p class="wf-alert error">{{ error() }}</p>
+    }
+    <p class="wf-pin-display">{{ pin() || '—' }}</p>
+    <numeric-pad
+      okLabel="Open register"
+      (digit)="appendPin($event)"
+      (backspace)="backspacePin()"
+      (clear)="clearPin()"
+      (submit)="submitPin()"
+    />
+  </div>
+} @else if (loading() && !catalog()) {
+  <p class="wf-loading wf-content">Loading…</p>
+} @else if (catalog(); as c) {
+  <header class="wf-topbar">
+    <div class="wf-brand-block">
+      <span class="brand">{{ c.kasseName }}</span>
+      <span class="sub">{{ c.verifonePoiId || 'QR only' }}</span>
+    </div>
+    <div class="actions">
+      <span class="wf-employee">{{ staffName() }}</span>
+      <button type="button" class="wf-btn ghost" (click)="logout()">Log out</button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="wf-alert error">{{ error() }}</p>
+  }
+
+  <div class="wf-split">
+    <div class="wf-split-left">
+      <input class="wf-search" type="search" placeholder="Search products…" [(ngModel)]="search" />
+      <div class="wf-chips">
+        <button type="button" class="wf-chip" [class.active]="!selectedCategoryId" (click)="selectedCategoryId = ''">
+          All
+        </button>
+        @for (cat of c.categories; track cat.id) {
+          <button
+            type="button"
+            class="wf-chip"
+            [class.active]="selectedCategoryId === cat.id"
+            (click)="selectedCategoryId = cat.id"
+          >
+            {{ cat.name }}
+          </button>
+        }
+      </div>
+      <div class="wf-grid">
+        @for (p of filteredProducts(); track p.id) {
+          <button type="button" class="wf-tile" (click)="addToCart(p.id)">
+            @if (p.imageUrl) {
+              <img class="img" [src]="p.imageUrl" alt="" />
+            } @else {
+              <div class="img"></div>
+            }
+            <span class="name">{{ p.name }}</span>
+            <span class="price">{{ p.priceOre / 100 | currency: 'DKK' }}</span>
+          </button>
+        }
+      </div>
+    </div>
+    <div class="wf-split-right">
+      <div class="wf-panel-sale">
+        <strong>Current sale</strong>
+        @for (line of cart.items(); track line.product.id) {
+          <cart-line
+            [name]="line.product.name"
+            [quantity]="line.quantity"
+            [lineTotalOre]="line.product.priceOre * line.quantity"
+            (increase)="cart.increase(line.product.id)"
+            (decrease)="cart.decrease(line.product.id)"
+            (remove)="cart.remove(line.product.id)"
+          />
+        }
+        @if (cart.items().length === 0) {
+          <p class="wf-hint">Tap products to add lines.</p>
+        }
+      </div>
+      <div class="wf-cart-total">Total: {{ cart.totalOre() / 100 | currency: 'DKK' }}</div>
+      @if (canCharge()) {
+        <pos-button type="button" variant="primary" class="block" [loading]="saleLoading()" (pressed)="chargeCard()">
+          Charge card
+        </pos-button>
+      }
+      @if (c.payWithQrEnabled) {
+        <pos-button type="button" variant="secondary" class="block" [loading]="saleLoading()" (pressed)="payWithQr()">
+          Pay with QR
+        </pos-button>
+      }
+      <button type="button" class="wf-btn danger block" (click)="cart.clear()">Clear cart</button>
+      <p class="wf-hint wf-mt-auto">Terminal or QR — no cash</p>
+    </div>
+  </div>
+}

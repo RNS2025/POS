@@ -887,3 +887,103 @@ a.wf-btn.ghost:hover:not(:disabled) {
   gap: var(--space-3);
   max-width: 20rem;
 }
+
+/* Staff kasse register */
+.shell-kasse {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.wf-btn.kasse,
+a.wf-btn.kasse {
+  background: var(--kasse);
+  color: #fff;
+  border-color: var(--kasse);
+}
+
+.wf-btn.kasse:hover:not(:disabled),
+a.wf-btn.kasse:hover:not(:disabled) {
+  background: var(--kasse);
+  color: #fff;
+  filter: brightness(0.9);
+}
+
+.wf-btn.block,
+.wf-btn.kasse.block,
+.wf-narrow-block {
+  width: 100%;
+  max-width: 20rem;
+}
+
+.wf-employee {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: var(--space-2) var(--space-3);
+  background: var(--kasse-soft);
+  color: var(--kasse);
+  border-radius: var(--radius-sm);
+}
+
+.wf-split {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+@media (min-width: 48rem) {
+  .wf-split {
+    flex-direction: row;
+  }
+}
+
+.wf-split-left {
+  flex: 1.2;
+  padding: var(--space-3);
+  overflow: auto;
+  border-bottom: 0.0625rem solid var(--border);
+  min-width: 0;
+}
+
+@media (min-width: 48rem) {
+  .wf-split-left {
+    border-bottom: none;
+    border-right: 0.0625rem solid var(--border);
+  }
+}
+
+.wf-split-right {
+  flex: 0.8;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  background: var(--ui-topbar-bg);
+}
+
+.wf-panel-sale {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.wf-panel-sale strong {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.wf-icon-ok.kasse-ok {
+  background: var(--kasse-soft);
+  color: var(--kasse);
+}
+
+.wf-mt-auto {
+  margin-top: auto;
+}

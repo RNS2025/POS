@@ -13,6 +13,7 @@ export interface CreateOrderInput {
   customerPhone?: string;
   paymentMethod?: string;
   kasseId?: string;
+  staffUserId?: string;
   status?: string;
   description?: string;
 }
@@ -35,6 +36,10 @@ export interface IOrderRepository {
   create(input: CreateOrderInput): Promise<Order>;
   createWithLineItems(input: CreateOrderInput, lines: CreateOrderLineInput[]): Promise<Order>;
   findByIdForTenant(tenantId: string, orderId: string): Promise<(Order & { payment: Payment | null }) | null>;
+  findByIdWithLines(
+    tenantId: string,
+    orderId: string,
+  ): Promise<(Order & { payment: Payment | null; lineItems: Array<{ nameSnapshot: string; quantity: number; lineTotalOre: number }> }) | null>;
   updateStatus(tenantId: string, orderId: string, status: string): Promise<void>;
   listForTenant(
     tenantId: string,
@@ -58,6 +63,7 @@ export class OrderRepository implements IOrderRepository {
         customerPhone: input.customerPhone ?? null,
         paymentMethod: input.paymentMethod ?? null,
         kasseId: input.kasseId ?? null,
+        staffUserId: input.staffUserId ?? null,
         description: input.description ?? null,
       },
     });
@@ -78,6 +84,7 @@ export class OrderRepository implements IOrderRepository {
           customerPhone: input.customerPhone ?? null,
           paymentMethod: input.paymentMethod ?? null,
           kasseId: input.kasseId ?? null,
+          staffUserId: input.staffUserId ?? null,
           description: input.description ?? null,
         },
       });
@@ -102,6 +109,19 @@ export class OrderRepository implements IOrderRepository {
     return prisma.order.findFirst({
       where: { id: orderId, tenantId },
       include: { payment: true },
+    });
+  }
+
+  findByIdWithLines(tenantId: string, orderId: string) {
+    return prisma.order.findFirst({
+      where: { id: orderId, tenantId },
+      include: {
+        payment: true,
+        lineItems: {
+          select: { nameSnapshot: true, quantity: true, lineTotalOre: true },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
     });
   }
 

@@ -39,9 +39,17 @@ export interface VerifoneReversalInput {
   reason?: string;
 }
 
+export interface VerifoneSaleOptions {
+  poiId?: string;
+}
+
 export interface IVerifoneClient {
   ping(tenantId: string): Promise<{ ok: boolean; error?: string }>;
-  createSale(tenantId: string, input: VerifoneSaleInput): Promise<VerifoneSaleResult>;
+  createSale(
+    tenantId: string,
+    input: VerifoneSaleInput,
+    options?: VerifoneSaleOptions,
+  ): Promise<VerifoneSaleResult>;
   refundSale(tenantId: string, input: VerifoneRefundInput): Promise<VerifoneSaleResult>;
   reverseSale(tenantId: string, input: VerifoneReversalInput): Promise<VerifoneSaleResult>;
   abortSale(tenantId: string, saleTransactionId: string): Promise<{ ok: boolean; error?: string }>;
@@ -97,8 +105,12 @@ export class VerifoneClient implements IVerifoneClient {
     }
   }
 
-  async createSale(tenantId: string, input: VerifoneSaleInput): Promise<VerifoneSaleResult> {
-    return this.paymentRequest(tenantId, input, 'NORMAL');
+  async createSale(
+    tenantId: string,
+    input: VerifoneSaleInput,
+    options?: VerifoneSaleOptions,
+  ): Promise<VerifoneSaleResult> {
+    return this.paymentRequest(tenantId, input, 'NORMAL', undefined, options?.poiId);
   }
 
   async refundSale(tenantId: string, input: VerifoneRefundInput): Promise<VerifoneSaleResult> {
@@ -233,6 +245,7 @@ export class VerifoneClient implements IVerifoneClient {
     input: VerifoneSaleInput,
     paymentType: 'NORMAL' | 'REFUND',
     originalPoi?: VerifonePoiTransaction,
+    poiIdOverride?: string,
   ): Promise<VerifoneSaleResult> {
     const row = await this.configs.findByTenantId(tenantId);
     if (!row) {
@@ -257,6 +270,7 @@ export class VerifoneClient implements IVerifoneClient {
     }
 
     const auth = this.buildAuth(row);
+    const poiId = poiIdOverride?.trim() || row.poiId;
     const amount = (input.amountOre / 100).toFixed(2);
     const timestamp = new Date().toISOString();
     const serviceId = String(randomInt(1000, 9999));
@@ -268,7 +282,7 @@ export class VerifoneClient implements IVerifoneClient {
         MessageType: 'REQUEST',
         ServiceID: serviceId,
         SaleID: row.saleId,
-        POIID: row.poiId,
+        POIID: poiId,
       },
       PaymentRequest: {
         SaleData: {

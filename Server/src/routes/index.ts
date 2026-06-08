@@ -7,6 +7,8 @@ import { registerOrdersRoutes } from './orders.routes.js';
 import { registerPlatformRoutes } from './platform.routes.js';
 import { registerCatalogRoutes } from './catalog.routes.js';
 import { registerKioskRoutes } from './kiosk.routes.js';
+import { registerKasseRegisterRoutes } from './kasse-register.routes.js';
+import { registerStaffRoutes } from './staff.routes.js';
 import { registerWebhookRoutes } from './webhook.routes.js';
 
 export function registerRoutes(app: Express) {
@@ -19,4 +21,6 @@ export function registerRoutes(app: Express) {
   registerPlatformRoutes(app);
   registerCatalogRoutes(app);
   registerKioskRoutes(app);
+  registerKasseRegisterRoutes(app);
+  registerStaffRoutes(app);
 }
