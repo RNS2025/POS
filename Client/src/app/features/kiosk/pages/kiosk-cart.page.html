@@ -1,0 +1,29 @@
+<div class="page-title">
+  <h1>Your cart</h1>
+</div>
+
+@if (cart.items().length === 0) {
+  <p class="wf-empty">Cart is empty.</p>
+  <p>
+    <a class="wf-btn" [routerLink]="['/', tenantSlug, 'kiosk', kasseSlug]">Back to menu</a>
+  </p>
+} @else {
+  @for (line of cart.items(); track line.product.id) {
+    <cart-line
+      [name]="line.product.name"
+      [quantity]="line.quantity"
+      [lineTotalOre]="line.product.priceOre * line.quantity"
+      (increase)="cart.increase(line.product.id)"
+      (decrease)="cart.decrease(line.product.id)"
+      (remove)="cart.remove(line.product.id)"
+    />
+  }
+
+  <p class="wf-cart-total">Total: {{ cart.totalOre() / 100 | currency: 'DKK' }}</p>
+
+  <div class="wf-toolbar">
+    <pos-button type="button" variant="ghost" (pressed)="cart.clear()">Clear cart</pos-button>
+    <a class="wf-btn" [routerLink]="['/', tenantSlug, 'kiosk', kasseSlug]">Add more</a>
+    <a class="wf-btn primary" [routerLink]="['/', tenantSlug, 'kiosk', kasseSlug, 'checkout']">Checkout</a>
+  </div>
+}

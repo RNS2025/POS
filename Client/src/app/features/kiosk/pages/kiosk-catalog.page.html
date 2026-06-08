@@ -1,0 +1,38 @@
+<async-shell [loading]="loading()" [error]="error()" [empty]="!loading() && !catalog()" emptyMessage="No menu available.">
+  @if (catalog(); as c) {
+    <div class="wf-chips">
+      <button type="button" class="wf-chip" [class.active]="!selectedCategoryId" (click)="selectedCategoryId = ''">
+        All
+      </button>
+      @for (cat of c.categories; track cat.id) {
+        <button
+          type="button"
+          class="wf-chip"
+          [class.active]="selectedCategoryId === cat.id"
+          (click)="selectedCategoryId = cat.id"
+        >
+          {{ cat.name }}
+        </button>
+      }
+    </div>
+
+    <div class="wf-grid">
+      @for (p of filteredProducts(); track p.id) {
+        <button type="button" class="wf-tile" (click)="addToCart(p.id)">
+          @if (p.imageUrl) {
+            <img class="img" [src]="p.imageUrl" alt="" />
+          } @else {
+            <div class="img"></div>
+          }
+          <span class="name">{{ p.name }}</span>
+          <span class="price">{{ p.priceOre / 100 | currency: 'DKK' }}</span>
+        </button>
+      }
+    </div>
+
+    <footer class="wf-footer-bar">
+      <span>{{ cartCount() }} items · {{ cartTotal() / 100 | currency: 'DKK' }}</span>
+      <a class="wf-btn primary" [routerLink]="['/', tenantSlug, 'kiosk', kasseSlug, 'cart']">View cart</a>
+    </footer>
+  }
+</async-shell>

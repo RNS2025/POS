@@ -10,7 +10,19 @@ export interface CreateOrderInput {
   amountOre: number;
   currency: string;
   customerEmail?: string;
+  customerPhone?: string;
+  paymentMethod?: string;
+  kasseId?: string;
+  status?: string;
   description?: string;
+}
+
+export interface CreateOrderLineInput {
+  productId: string | null;
+  nameSnapshot: string;
+  unitPriceOre: number;
+  quantity: number;
+  lineTotalOre: number;
 }
 
 export interface OrderListFilters {
@@ -21,6 +33,7 @@ export interface OrderListFilters {
 
 export interface IOrderRepository {
   create(input: CreateOrderInput): Promise<Order>;
+  createWithLineItems(input: CreateOrderInput, lines: CreateOrderLineInput[]): Promise<Order>;
   findByIdForTenant(tenantId: string, orderId: string): Promise<(Order & { payment: Payment | null }) | null>;
   updateStatus(tenantId: string, orderId: string, status: string): Promise<void>;
   listForTenant(
@@ -42,8 +55,46 @@ export class OrderRepository implements IOrderRepository {
         currency: input.currency,
         status: 'pending',
         customerEmail: input.customerEmail ?? null,
+        customerPhone: input.customerPhone ?? null,
+        paymentMethod: input.paymentMethod ?? null,
+        kasseId: input.kasseId ?? null,
         description: input.description ?? null,
       },
+    });
+  }
+
+  createWithLineItems(input: CreateOrderInput, lines: CreateOrderLineInput[]) {
+    const ref = generateQuickpayOrderRef();
+    return prisma.$transaction(async (tx) => {
+      const order = await tx.order.create({
+        data: {
+          tenantId: input.tenantId,
+          channel: input.channel,
+          quickpayOrderRef: ref,
+          amountOre: input.amountOre,
+          currency: input.currency,
+          status: input.status ?? 'pending',
+          customerEmail: input.customerEmail ?? null,
+          customerPhone: input.customerPhone ?? null,
+          paymentMethod: input.paymentMethod ?? null,
+          kasseId: input.kasseId ?? null,
+          description: input.description ?? null,
+        },
+      });
+      if (lines.length > 0) {
+        await tx.orderLineItem.createMany({
+          data: lines.map((line) => ({
+            tenantId: input.tenantId,
+            orderId: order.id,
+            productId: line.productId,
+            nameSnapshot: line.nameSnapshot,
+            unitPriceOre: line.unitPriceOre,
+            quantity: line.quantity,
+            lineTotalOre: line.lineTotalOre,
+          })),
+        });
+      }
+      return order;
     });
   }
 

@@ -26,6 +26,10 @@ export interface IProductRepository {
   create(tenantId: string, data: CreateProductInput): Promise<Product>;
   update(tenantId: string, id: string, data: UpdateProductInput): Promise<Product | null>;
   setKasseIds(tenantId: string, productId: string, kasseIds: string[]): Promise<void>;
+  listActiveForKasse(
+    tenantId: string,
+    kasseId: string,
+  ): Promise<Array<Product & { category: { id: string; name: string; sortOrder: number; isActive: boolean } | null }>>;
 }
 
 export class ProductRepository implements IProductRepository {
@@ -68,6 +72,21 @@ export class ProductRepository implements IProductRepository {
       return null;
     }
     return prisma.product.findFirst({ where: { id, tenantId } });
+  }
+
+  listActiveForKasse(tenantId: string, kasseId: string) {
+    return prisma.product.findMany({
+      where: {
+        tenantId,
+        isActive: true,
+        productKasser: { some: { kasseId, tenantId } },
+        OR: [{ categoryId: null }, { category: { isActive: true } }],
+      },
+      include: {
+        category: { select: { id: true, name: true, sortOrder: true, isActive: true } },
+      },
+      orderBy: { name: 'asc' },
+    });
   }
 
   async setKasseIds(tenantId: string, productId: string, kasseIds: string[]) {

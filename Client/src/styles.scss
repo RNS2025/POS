@@ -702,3 +702,188 @@ a.wf-btn.ghost:hover:not(:disabled) {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+/* Kiosk */
+.wf-kiosk-main {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 4rem);
+}
+
+.wf-chips {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.wf-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-radius: 999px;
+  border: 0.0625rem solid var(--border);
+  font-size: 0.9rem;
+  background: var(--panel);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.wf-chip.active {
+  background: var(--ui-accent, var(--text));
+  color: #fff;
+  border-color: var(--ui-accent, var(--text));
+}
+
+.wf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 7.5rem), 1fr));
+  gap: var(--space-3);
+  flex: 1;
+}
+
+.wf-tile {
+  background: var(--tile);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  text-align: center;
+  cursor: pointer;
+  border: 0.125rem solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: inherit;
+  color: inherit;
+}
+
+.wf-tile:hover,
+.wf-tile:focus-visible {
+  border-color: var(--ui-accent, var(--accent));
+  background: var(--ui-accent-soft, var(--accent-soft));
+}
+
+.wf-tile .img {
+  height: 3.5rem;
+  background: var(--color-gray-200);
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  width: 100%;
+}
+
+.wf-tile .name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.wf-tile .price {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.wf-footer-bar {
+  padding: var(--space-4);
+  border-top: 0.0625rem solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--ui-topbar-bg);
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.wf-cart-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 0.0625rem solid var(--border);
+  flex-wrap: wrap;
+}
+
+.wf-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.wf-cart-total {
+  margin-top: var(--space-4);
+  font-weight: 700;
+  font-size: 1.35rem;
+}
+
+.wf-pin-display {
+  font-size: 2rem;
+  letter-spacing: 0.2em;
+  margin: var(--space-5) 0;
+  font-family: var(--font-mono);
+  text-align: center;
+}
+
+.wf-pinpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  max-width: 17.5rem;
+  margin: 0 auto var(--space-5);
+}
+
+.wf-pinpad .wide {
+  grid-column: span 3;
+}
+
+.wf-qr-box {
+  width: min(100%, 12.5rem);
+  aspect-ratio: 1;
+  margin: 0 auto var(--space-5);
+  border: 0.1875rem solid var(--ui-accent);
+  border-radius: var(--radius-md);
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-gray-900) 0 0.25rem,
+    var(--panel) 0.25rem 0.5rem
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wf-qr-box span {
+  background: var(--panel);
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+}
+
+.wf-success {
+  text-align: center;
+  padding: var(--space-8) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.wf-icon-ok {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: var(--kiosk-soft);
+  color: var(--kiosk);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.wf-checkout-methods {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 20rem;
+}

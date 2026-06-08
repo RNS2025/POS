@@ -24,6 +24,15 @@ import { MerchantDetailPage } from './features/platform/pages/merchant-detail.pa
 import { RegisterPage } from './features/register/pages/register.page';
 import { KassePage } from './features/kasse/pages/kasse.page';
 import { HomePage } from './features/shop/pages/home.page';
+import { KioskLayoutComponent } from './layouts/kiosk-layout/kiosk-layout.component';
+import { KioskCancelPage } from './features/kiosk/pages/kiosk-cancel.page';
+import { KioskCartPage } from './features/kiosk/pages/kiosk-cart.page';
+import { KioskCatalogPage } from './features/kiosk/pages/kiosk-catalog.page';
+import { KioskCheckoutPage } from './features/kiosk/pages/kiosk-checkout.page';
+import { KioskLaterPage } from './features/kiosk/pages/kiosk-later.page';
+import { KioskQrPage } from './features/kiosk/pages/kiosk-qr.page';
+import { KioskStartPage } from './features/kiosk/pages/kiosk-start.page';
+import { KioskSuccessPage } from './features/kiosk/pages/kiosk-success.page';
 
 export const routes: Routes = [
   {
@@ -49,6 +58,20 @@ export const routes: Routes = [
     path: 'platform/merchants/:tenantId',
     component: MerchantDetailPage,
     canActivate: [platformAdminGuard],
+  },
+  {
+    path: ':tenantSlug/kiosk/:kasseSlug',
+    component: KioskLayoutComponent,
+    children: [
+      { path: 'start', component: KioskStartPage },
+      { path: 'cart', component: KioskCartPage },
+      { path: 'checkout', component: KioskCheckoutPage },
+      { path: 'checkout/qr', component: KioskQrPage },
+      { path: 'checkout/later', component: KioskLaterPage },
+      { path: 'checkout/success', component: KioskSuccessPage },
+      { path: 'checkout/cancel', component: KioskCancelPage },
+      { path: '', component: KioskCatalogPage },
+    ],
   },
   {
     path: ':tenantSlug/kasse',

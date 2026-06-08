@@ -19,6 +19,7 @@ export interface ICategoryRepository {
   update(tenantId: string, id: string, data: UpdateCategoryInput): Promise<Category | null>;
   countProducts(tenantId: string, id: string): Promise<number>;
   deleteIfEmpty(tenantId: string, id: string): Promise<boolean>;
+  listActiveByTenant(tenantId: string): Promise<Category[]>;
 }
 
 export class CategoryRepository implements ICategoryRepository {
@@ -33,6 +34,13 @@ export class CategoryRepository implements ICategoryRepository {
       }),
       prisma.category.count({ where: { tenantId } }),
     ]).then(([items, total]) => ({ items, total }));
+  }
+
+  listActiveByTenant(tenantId: string) {
+    return prisma.category.findMany({
+      where: { tenantId, isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    });
   }
 
   findById(tenantId: string, id: string) {

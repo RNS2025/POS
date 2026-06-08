@@ -1,0 +1,30 @@
+<div class="page-title">
+  <h1>Choose payment</h1>
+  <p>Total: {{ cart.totalOre() / 100 | currency: 'DKK' }}</p>
+</div>
+
+<p>
+  <a class="wf-btn ghost" [routerLink]="['/', tenantSlug, 'kiosk', kasseSlug, 'cart']">← Back to cart</a>
+</p>
+
+@if (error()) {
+  <p class="wf-alert error">{{ error() }}</p>
+}
+
+@if (catalog(); as c) {
+  <div class="wf-checkout-methods">
+    @if (c.paymentMethods.qr) {
+      <pos-button type="button" variant="primary" [loading]="loading()" (pressed)="pay('qr')">
+        Pay with QR
+      </pos-button>
+    }
+    @if (c.paymentMethods.later) {
+      <pos-button type="button" variant="secondary" [loading]="loading()" (pressed)="pay('later')">
+        Pay later at counter
+      </pos-button>
+    }
+  </div>
+  @if (c.paymentMethods.sms) {
+    <p class="wf-hint">SMS payment will be available in a future update.</p>
+  }
+}
