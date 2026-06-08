@@ -32,7 +32,7 @@ export class KioskCatalogService {
       qr: kasse.payWithQrEnabled,
       sms: kasse.payWithSmsEnabled,
       later: kasse.payWithLaterEnabled,
-      terminal: Boolean(kasse.verifonePoiId?.trim()),
+      terminal: kasse.payWithTerminalEnabled && Boolean(kasse.verifonePoiId?.trim()),
     };
 
     return {

@@ -11,11 +11,19 @@ const slugSchema = z
   .max(64)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase letters, numbers, and hyphens.');
 
+const kioskPaymentFields = {
+  payWithQrEnabled: z.boolean().optional(),
+  payWithSmsEnabled: z.boolean().optional(),
+  payWithLaterEnabled: z.boolean().optional(),
+  payWithTerminalEnabled: z.boolean().optional(),
+};
+
 const createSchema = z.object({
   type: z.enum(['kiosk', 'register']),
   name: z.string().min(1).max(120),
   slug: slugSchema,
   verifonePoiId: z.string().max(64).optional(),
+  ...kioskPaymentFields,
 });
 
 const updateSchema = z.object({
@@ -23,9 +31,7 @@ const updateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   slug: slugSchema.optional(),
   verifonePoiId: z.string().max(64).nullable().optional(),
-  payWithQrEnabled: z.boolean().optional(),
-  payWithSmsEnabled: z.boolean().optional(),
-  payWithLaterEnabled: z.boolean().optional(),
+  ...kioskPaymentFields,
   isActive: z.boolean().optional(),
 });
 
@@ -46,6 +52,7 @@ function toSummary(
     payWithQrEnabled: k.payWithQrEnabled,
     payWithSmsEnabled: k.payWithSmsEnabled,
     payWithLaterEnabled: k.payWithLaterEnabled,
+    payWithTerminalEnabled: k.payWithTerminalEnabled,
     isActive: k.isActive,
     productCount,
   };
@@ -56,6 +63,7 @@ function assertKioskPaymentMethods(data: {
   payWithQrEnabled?: boolean;
   payWithSmsEnabled?: boolean;
   payWithLaterEnabled?: boolean;
+  payWithTerminalEnabled?: boolean;
   verifonePoiId?: string | null;
 }) {
   if (data.type !== 'kiosk' && data.type !== undefined) {
@@ -64,12 +72,12 @@ function assertKioskPaymentMethods(data: {
   const qr = data.payWithQrEnabled ?? true;
   const sms = data.payWithSmsEnabled ?? false;
   const later = data.payWithLaterEnabled ?? false;
-  const terminal = Boolean(data.verifonePoiId?.trim());
+  const terminal = data.payWithTerminalEnabled ?? false;
   if (!qr && !sms && !later && !terminal) {
-    throw new AppError(
-      'Enable at least one payment method or configure a Verifone terminal POI ID.',
-      400,
-    );
+    throw new AppError('Enable at least one customer payment method.', 400);
+  }
+  if (terminal && !data.verifonePoiId?.trim()) {
+    throw new AppError('Enter a Verifone POI ID when Pay with card is enabled.', 400);
   }
 }
 
@@ -98,18 +106,39 @@ export class KasserService {
   async create(auth: JwtPayload, tenant: { id: string; slug: string }, body: unknown) {
     requireStaff(auth, tenant.id, tenant.slug, 'kasser:write');
     const data = createSchema.parse(body);
+    const payWithTerminalEnabled = data.payWithTerminalEnabled ?? false;
+    const verifonePoiId =
+      data.type === 'kiosk' && !payWithTerminalEnabled ? null : data.verifonePoiId ?? null;
+
     if (data.type === 'kiosk') {
-      assertKioskPaymentMethods({ type: 'kiosk', verifonePoiId: data.verifonePoiId });
+      assertKioskPaymentMethods({
+        type: 'kiosk',
+        payWithQrEnabled: data.payWithQrEnabled,
+        payWithSmsEnabled: data.payWithSmsEnabled,
+        payWithLaterEnabled: data.payWithLaterEnabled,
+        payWithTerminalEnabled,
+        verifonePoiId,
+      });
     }
+
     const existing = await this.kasser.findBySlug(tenant.id, data.slug);
     if (existing) {
       throw new AppError('A kasse with this link slug already exists.', 409);
     }
+
     const k = await this.kasser.create(tenant.id, {
       type: data.type,
       name: data.name,
       slug: data.slug,
-      verifonePoiId: data.verifonePoiId ?? null,
+      verifonePoiId: data.type === 'register' ? data.verifonePoiId ?? null : verifonePoiId,
+      ...(data.type === 'kiosk'
+        ? {
+            payWithQrEnabled: data.payWithQrEnabled,
+            payWithSmsEnabled: data.payWithSmsEnabled,
+            payWithLaterEnabled: data.payWithLaterEnabled,
+            payWithTerminalEnabled,
+          }
+        : {}),
     });
     return toSummary(k, 0);
   }
@@ -121,22 +150,40 @@ export class KasserService {
     if (!current) {
       throw new AppError('Kasse not found.', 404);
     }
+
     const mergedType = data.type ?? current.type;
+    const payWithTerminalEnabled =
+      mergedType === 'kiosk'
+        ? (data.payWithTerminalEnabled ?? current.payWithTerminalEnabled)
+        : current.payWithTerminalEnabled;
+    let verifonePoiId =
+      data.verifonePoiId !== undefined ? data.verifonePoiId : current.verifonePoiId;
+
+    if (mergedType === 'kiosk' && !payWithTerminalEnabled) {
+      verifonePoiId = null;
+    }
+
     assertKioskPaymentMethods({
       type: mergedType,
       payWithQrEnabled: data.payWithQrEnabled ?? current.payWithQrEnabled,
       payWithSmsEnabled: data.payWithSmsEnabled ?? current.payWithSmsEnabled,
       payWithLaterEnabled: data.payWithLaterEnabled ?? current.payWithLaterEnabled,
-      verifonePoiId:
-        data.verifonePoiId !== undefined ? data.verifonePoiId : current.verifonePoiId,
+      payWithTerminalEnabled,
+      verifonePoiId,
     });
+
     if (data.slug && data.slug !== current.slug) {
       const clash = await this.kasser.findBySlug(tenant.id, data.slug);
       if (clash && clash.id !== id) {
         throw new AppError('A kasse with this link slug already exists.', 409);
       }
     }
-    const k = await this.kasser.update(tenant.id, id, data);
+
+    const k = await this.kasser.update(tenant.id, id, {
+      ...data,
+      verifonePoiId,
+      ...(mergedType === 'kiosk' ? { payWithTerminalEnabled } : {}),
+    });
     if (!k) {
       throw new AppError('Kasse not found.', 404);
     }

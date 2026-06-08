@@ -69,3 +69,13 @@ export type KioskCheckoutResponse =
   | KioskCheckoutQrResponse
   | KioskCheckoutLaterResponse
   | KioskCheckoutTerminalResponse;
+
+export interface KioskOrderStatusResponse {
+  orderId: string;
+  status: string;
+  paymentStatus: string | null;
+  amountOre: number;
+  currency: string;
+  paymentUrl: string | null;
+  createdAt?: string;
+}

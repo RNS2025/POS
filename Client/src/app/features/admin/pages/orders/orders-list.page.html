@@ -2,8 +2,10 @@
   <h1>Orders</h1>
 </div>
 
-@if (loading() && items().length === 0) {
+@if (loading() && items().length === 0 && !error()) {
   <p class="wf-loading">Loading…</p>
+} @else if (error()) {
+  <p class="wf-alert error">{{ error() }}</p>
 } @else {
   <form class="wf-form wf-toolbar" (ngSubmit)="applyFilters()">
     <label>
@@ -62,7 +64,7 @@
   </form>
 
   @if (items().length === 0) {
-    <p class="wf-empty">No orders found.</p>
+    <p class="wf-empty">{{ emptyMessage() }}</p>
   } @else {
     <table class="wf-table">
       <thead>
@@ -84,8 +86,8 @@
               <a [routerLink]="['/', tenantSlug, 'admin', 'orders', o.id]">{{ o.quickpayOrderRef }}</a>
             </td>
             <td>{{ o.channel === 'terminal' ? 'In-store' : 'Online' }}</td>
-            <td>{{ o.kasseName ?? '—' }}</td>
-            <td>{{ o.staffDisplayName ?? '—' }}</td>
+            <td>{{ displayOptional(o.kasseName) }}</td>
+            <td>{{ displayOptional(o.staffDisplayName) }}</td>
             <td>{{ o.amountOre / 100 | currency: o.currency }}</td>
             <td>{{ statusLabel(o.status) }}</td>
             <td>{{ paymentMethodLabel(o.paymentMethod) }}</td>
@@ -103,8 +105,4 @@
       (next)="nextPage()"
     />
   }
-}
-
-@if (error()) {
-  <p class="wf-alert error">{{ error() }}</p>
 }

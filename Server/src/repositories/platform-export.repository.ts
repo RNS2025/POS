@@ -47,6 +47,7 @@ type TenantExportData = {
       payWithQrEnabled: boolean;
       payWithSmsEnabled: boolean;
       payWithLaterEnabled: boolean;
+      payWithTerminalEnabled: boolean;
       isActive: boolean;
       createdAt: Date;
       updatedAt: Date;

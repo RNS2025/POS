@@ -11,6 +11,7 @@ export interface KasseSummary {
   payWithQrEnabled: boolean;
   payWithSmsEnabled: boolean;
   payWithLaterEnabled: boolean;
+  payWithTerminalEnabled: boolean;
   isActive: boolean;
   productCount?: number;
 }
@@ -20,6 +21,10 @@ export interface CreateKasseRequest {
   name: string;
   slug: string;
   verifonePoiId?: string;
+  payWithQrEnabled?: boolean;
+  payWithSmsEnabled?: boolean;
+  payWithLaterEnabled?: boolean;
+  payWithTerminalEnabled?: boolean;
 }
 
 export interface UpdateKasseRequest {
@@ -30,6 +35,7 @@ export interface UpdateKasseRequest {
   payWithQrEnabled?: boolean;
   payWithSmsEnabled?: boolean;
   payWithLaterEnabled?: boolean;
+  payWithTerminalEnabled?: boolean;
   isActive?: boolean;
 }
 

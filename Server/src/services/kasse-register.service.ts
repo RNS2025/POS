@@ -219,6 +219,7 @@ export class KasseRegisterService {
       paymentStatus: order.payment?.status ?? null,
       amountOre: order.amountOre,
       currency: order.currency,
+      paymentUrl: order.payment?.paymentLinkUrl ?? null,
     };
   }
 

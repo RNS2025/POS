@@ -104,6 +104,7 @@ export class CheckoutService {
       currency: order.currency,
       status: order.status,
       paymentStatus: order.payment?.status ?? null,
+      paymentUrl: order.payment?.paymentLinkUrl ?? null,
       createdAt: order.createdAt.toISOString(),
     };
   }

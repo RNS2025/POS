@@ -6,6 +6,10 @@ export interface CreateKasseInput {
   name: string;
   slug: string;
   verifonePoiId?: string | null;
+  payWithQrEnabled?: boolean;
+  payWithSmsEnabled?: boolean;
+  payWithLaterEnabled?: boolean;
+  payWithTerminalEnabled?: boolean;
 }
 
 export interface UpdateKasseInput {
@@ -16,6 +20,7 @@ export interface UpdateKasseInput {
   payWithQrEnabled?: boolean;
   payWithSmsEnabled?: boolean;
   payWithLaterEnabled?: boolean;
+  payWithTerminalEnabled?: boolean;
   isActive?: boolean;
 }
 
@@ -59,6 +64,14 @@ export class KasseRepository implements IKasseRepository {
         name: data.name,
         slug: data.slug,
         verifonePoiId: data.verifonePoiId ?? null,
+        ...(data.payWithQrEnabled !== undefined ? { payWithQrEnabled: data.payWithQrEnabled } : {}),
+        ...(data.payWithSmsEnabled !== undefined ? { payWithSmsEnabled: data.payWithSmsEnabled } : {}),
+        ...(data.payWithLaterEnabled !== undefined
+          ? { payWithLaterEnabled: data.payWithLaterEnabled }
+          : {}),
+        ...(data.payWithTerminalEnabled !== undefined
+          ? { payWithTerminalEnabled: data.payWithTerminalEnabled }
+          : {}),
       },
     });
   }

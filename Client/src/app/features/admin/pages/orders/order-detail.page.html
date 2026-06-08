@@ -6,7 +6,13 @@
 
 @if (loading() && !order()) {
   <p class="wf-loading">Loading…</p>
+} @else if (error() && !order()) {
+  <p class="wf-alert error">{{ error() }}</p>
 } @else if (order(); as o) {
+  @if (error()) {
+    <p class="wf-alert error">{{ error() }}</p>
+  }
+
   <section class="wf-panel">
     <p><strong>Ref:</strong> {{ o.quickpayOrderRef }}</p>
     <p><strong>Channel:</strong> {{ o.channel === 'terminal' ? 'In-store' : 'Online' }}</p>
@@ -19,35 +25,25 @@
         {{ o.status }}
       }
     </p>
-    <p><strong>Payment:</strong> {{ o.paymentStatus ?? '—' }}</p>
-    @if (o.paymentMethod) {
-      <p><strong>Payment method:</strong> {{ o.paymentMethod }}</p>
-    }
-    @if (o.kasseName) {
-      <p><strong>Kasse:</strong> {{ o.kasseName }} @if (o.kasseSlug) { ({{ o.kasseSlug }}) }</p>
-    }
-    @if (o.staffDisplayName) {
-      <p><strong>Employee:</strong> {{ o.staffDisplayName }}</p>
-    }
+    <p><strong>Payment:</strong> {{ displayText(o.paymentStatus) }}</p>
+    <p><strong>Payment method:</strong> {{ displayText(o.paymentMethod) }}</p>
+    <p><strong>Kasse:</strong> {{ kasseLabel(o) }}</p>
+    <p><strong>Employee:</strong> {{ displayText(o.staffDisplayName) }}</p>
     @if (o.refundedAmountOre > 0) {
       <p><strong>Refunded:</strong> {{ o.refundedAmountOre / 100 | currency: o.currency }}</p>
       <p><strong>Refundable remaining:</strong> {{ o.refundableAmountOre / 100 | currency: o.currency }}</p>
     }
-    @if (o.customerEmail) {
-      <p><strong>Customer email:</strong> {{ o.customerEmail }}</p>
-    }
-    @if (o.customerPhone) {
-      <p><strong>Customer phone:</strong> {{ o.customerPhone }}</p>
-    }
-    @if (o.description) {
-      <p><strong>Note:</strong> {{ o.description }}</p>
-    }
+    <p><strong>Customer email:</strong> {{ displayText(o.customerEmail) }}</p>
+    <p><strong>Customer phone:</strong> {{ displayText(o.customerPhone) }}</p>
+    <p><strong>Note:</strong> {{ displayText(o.description) }}</p>
     <p><strong>Created:</strong> {{ o.createdAt | date: 'medium' }}</p>
   </section>
 
-  @if (o.lineItems.length > 0) {
-    <section class="wf-panel">
-      <h2>Line items</h2>
+  <section class="wf-panel">
+    <h2>Line items</h2>
+    @if (o.lineItems.length === 0) {
+      <p class="wf-empty">No line items recorded.</p>
+    } @else {
       <table class="wf-table">
         <thead>
           <tr>
@@ -66,8 +62,8 @@
           }
         </tbody>
       </table>
-    </section>
-  }
+    }
+  </section>
 
   @if (o.status === 'failed' || o.status === 'cancelled' || o.status === 'pending') {
     <p>Payment did not complete — share the payment link below or refresh it.</p>
@@ -137,9 +133,11 @@
     }
   </section>
 
-  @if (o.paymentActions.length > 0) {
-    <section>
-      <h2>Activity</h2>
+  <section class="wf-panel">
+    <h2>Activity</h2>
+    @if (o.paymentActions.length === 0) {
+      <p class="wf-empty">No payment activity yet.</p>
+    } @else {
       <ul>
         @for (a of o.paymentActions; track a.id) {
           <li>
@@ -154,8 +152,8 @@
           </li>
         }
       </ul>
-    </section>
-  }
+    }
+  </section>
 
   @if (success()) {
     <p>{{ success() }}</p>
@@ -206,8 +204,4 @@
     (confirmed)="abortSale()"
     (cancelled)="abortDialogOpen.set(false)"
   />
-}
-
-@if (error()) {
-  <p>{{ error() }}</p>
 }

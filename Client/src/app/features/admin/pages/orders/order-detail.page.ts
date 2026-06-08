@@ -9,6 +9,7 @@ import { hasPermission } from '@shared/permissions';
 import { OrdersService } from '../../../../core/services/orders.service';
 import { SessionService } from '../../../../core/services/session.service';
 import { apiErrorMessage } from '../../../../core/utils/api-error';
+import { displayText } from '../../../../core/utils/display-value';
 import type { OrderDetailResponse, PaymentActionType, RetryOrderResponse, SyncOrderStatusResponse } from '@shared/orders';
 
 @Component({
@@ -168,6 +169,15 @@ export class OrderDetailPage implements OnInit {
         this.load();
       },
     );
+  }
+
+  protected readonly displayText = displayText;
+
+  protected kasseLabel(o: OrderDetailResponse): string {
+    if (!o.kasseName?.trim()) {
+      return 'Not set';
+    }
+    return o.kasseSlug ? `${o.kasseName} (${o.kasseSlug})` : o.kasseName;
   }
 
   private runAction<T>(call: () => import('rxjs').Observable<T>, onSuccess: (res: T) => void): void {

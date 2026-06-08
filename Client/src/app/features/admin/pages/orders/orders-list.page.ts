@@ -10,6 +10,7 @@ import { KasserService } from '../../../../core/services/kasser.service';
 import { OrdersService } from '../../../../core/services/orders.service';
 import { StaffService } from '../../../../core/services/staff.service';
 import { apiErrorMessage } from '../../../../core/utils/api-error';
+import { displayOptional } from '../../../../core/utils/display-value';
 import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
 import { PosButtonComponent } from '../../../../shared/components/pos-button/pos-button.component';
 
@@ -112,7 +113,7 @@ export class OrdersListPage implements OnInit {
 
   protected paymentMethodLabel(method: string | null): string {
     if (!method) {
-      return '—';
+      return 'Not set';
     }
     const labels: Record<string, string> = {
       qr: 'QR',
@@ -122,4 +123,20 @@ export class OrdersListPage implements OnInit {
     };
     return labels[method] ?? method;
   }
+
+  protected emptyMessage(): string {
+    if (
+      this.statusFilter ||
+      this.channelFilter ||
+      this.kasseFilter ||
+      this.staffFilter ||
+      this.paymentMethodFilter ||
+      this.searchQuery.trim()
+    ) {
+      return 'No orders match your filters.';
+    }
+    return 'No orders yet.';
+  }
+
+  protected readonly displayOptional = displayOptional;
 }

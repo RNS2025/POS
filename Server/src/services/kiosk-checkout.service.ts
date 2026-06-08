@@ -285,6 +285,9 @@ export class KioskCheckoutService {
     if (method === 'later' && !kasse.payWithLaterEnabled) {
       throw new AppError('Pay later is not enabled for this kiosk.', 400);
     }
+    if (method === 'terminal' && !kasse.payWithTerminalEnabled) {
+      throw new AppError('Pay with card is not enabled for this kiosk.', 400);
+    }
     if (method === 'terminal' && !kasse.verifonePoiId?.trim()) {
       throw new AppError('No terminal is configured for this kiosk.', 400);
     }

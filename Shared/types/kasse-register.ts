@@ -53,6 +53,7 @@ export interface KasseOrderStatusResponse {
   paymentStatus: string | null;
   amountOre: number;
   currency: string;
+  paymentUrl: string | null;
 }
 
 export interface KasseReceiptLine {

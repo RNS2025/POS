@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import type { KasseType } from '@shared/catalog';
+import type { CreateKasseRequest, KasseType, UpdateKasseRequest } from '@shared/catalog';
 import { KasserService } from '../../../../core/services/kasser.service';
 import { apiErrorMessage } from '../../../../core/utils/api-error';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -29,6 +29,7 @@ export class KasseFormPage implements OnInit {
   protected payWithQrEnabled = true;
   protected payWithSmsEnabled = false;
   protected payWithLaterEnabled = false;
+  protected payWithTerminalEnabled = false;
   protected isActive = true;
 
   protected readonly loading = signal(false);
@@ -47,7 +48,7 @@ export class KasseFormPage implements OnInit {
 
   protected kioskUrl(): string {
     const path = this.type === 'kiosk' ? 'kiosk' : 'kasse';
-    return `payment.rns-apps.dk/${this.tenantSlug}/${path}/${this.slug}`;
+    return `${window.location.host}/${this.tenantSlug}/${path}/${this.slug}`;
   }
 
   protected load(): void {
@@ -61,6 +62,7 @@ export class KasseFormPage implements OnInit {
         this.payWithQrEnabled = k.payWithQrEnabled;
         this.payWithSmsEnabled = k.payWithSmsEnabled;
         this.payWithLaterEnabled = k.payWithLaterEnabled;
+        this.payWithTerminalEnabled = k.payWithTerminalEnabled;
         this.isActive = k.isActive;
         this.loading.set(false);
       },
@@ -74,31 +76,10 @@ export class KasseFormPage implements OnInit {
   protected save(): void {
     this.saving.set(true);
     this.error.set('');
-    const poi = this.verifonePoiId.trim();
-    const kioskPayments =
-      this.type === 'kiosk'
-        ? {
-            payWithQrEnabled: this.payWithQrEnabled,
-            payWithSmsEnabled: this.payWithSmsEnabled,
-            payWithLaterEnabled: this.payWithLaterEnabled,
-          }
-        : {};
 
     const req = this.isEdit
-      ? this.kasserApi.update(this.tenantSlug, this.kasseId, {
-          type: this.type,
-          name: this.name,
-          slug: this.slug,
-          verifonePoiId: poi || null,
-          ...kioskPayments,
-          isActive: this.isActive,
-        })
-      : this.kasserApi.create(this.tenantSlug, {
-          type: this.type,
-          name: this.name,
-          slug: this.slug,
-          verifonePoiId: poi || undefined,
-        });
+      ? this.kasserApi.update(this.tenantSlug, this.kasseId, this.buildUpdateBody())
+      : this.kasserApi.create(this.tenantSlug, this.buildCreateBody());
 
     req.subscribe({
       next: () => {
@@ -110,6 +91,54 @@ export class KasseFormPage implements OnInit {
         this.saving.set(false);
       },
     });
+  }
+
+  private buildCreateBody(): CreateKasseRequest {
+    if (this.type === 'kiosk') {
+      return {
+        type: this.type,
+        name: this.name,
+        slug: this.slug,
+        payWithQrEnabled: this.payWithQrEnabled,
+        payWithSmsEnabled: this.payWithSmsEnabled,
+        payWithLaterEnabled: this.payWithLaterEnabled,
+        payWithTerminalEnabled: this.payWithTerminalEnabled,
+        verifonePoiId: this.payWithTerminalEnabled ? this.verifonePoiId.trim() : undefined,
+      };
+    }
+
+    const poi = this.verifonePoiId.trim();
+    return {
+      type: this.type,
+      name: this.name,
+      slug: this.slug,
+      verifonePoiId: poi || undefined,
+    };
+  }
+
+  private buildUpdateBody(): UpdateKasseRequest {
+    if (this.type === 'kiosk') {
+      return {
+        type: this.type,
+        name: this.name,
+        slug: this.slug,
+        payWithQrEnabled: this.payWithQrEnabled,
+        payWithSmsEnabled: this.payWithSmsEnabled,
+        payWithLaterEnabled: this.payWithLaterEnabled,
+        payWithTerminalEnabled: this.payWithTerminalEnabled,
+        verifonePoiId: this.payWithTerminalEnabled ? this.verifonePoiId.trim() || null : null,
+        isActive: this.isActive,
+      };
+    }
+
+    const poi = this.verifonePoiId.trim();
+    return {
+      type: this.type,
+      name: this.name,
+      slug: this.slug,
+      verifonePoiId: poi || null,
+      isActive: this.isActive,
+    };
   }
 
   protected openDeactivate(): void {

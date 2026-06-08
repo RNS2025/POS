@@ -4,6 +4,7 @@ import type {
   KioskCatalogResponse,
   KioskCheckoutRequest,
   KioskCheckoutResponse,
+  KioskOrderStatusResponse,
 } from '@shared/kiosk';
 
 @Injectable({ providedIn: 'root' })
@@ -24,12 +25,8 @@ export class KioskService {
   }
 
   getOrderStatus(tenantSlug: string, kasseSlug: string, orderId: string) {
-    return this.http.get<{
-      orderId: string;
-      status: string;
-      paymentStatus: string | null;
-      amountOre: number;
-      currency: string;
-    }>(`/api/v1/tenants/${tenantSlug}/kiosk/${kasseSlug}/orders/${orderId}`);
+    return this.http.get<KioskOrderStatusResponse>(
+      `/api/v1/tenants/${tenantSlug}/kiosk/${kasseSlug}/orders/${orderId}`,
+    );
   }
 }

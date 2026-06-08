@@ -27,11 +27,13 @@
       <copy-field [value]="kioskUrl()" ariaLabel="Kasse URL" />
     }
 
-    <label>
-      Verifone POI ID (optional)
-      <input name="verifonePoiId" [(ngModel)]="verifonePoiId" />
-    </label>
-    <p class="wf-hint">When set, this iPad can accept card payments on the linked terminal.</p>
+    @if (type === 'register') {
+      <label>
+        Verifone POI ID (optional)
+        <input name="verifonePoiId" [(ngModel)]="verifonePoiId" />
+      </label>
+      <p class="wf-hint">When set, staff can charge cards on the linked terminal.</p>
+    }
 
     @if (type === 'kiosk') {
       <fieldset class="wf-fieldset">
@@ -48,6 +50,16 @@
           <input type="checkbox" name="payWithLaterEnabled" [(ngModel)]="payWithLaterEnabled" />
           Pay later
         </label>
+        <label>
+          <input type="checkbox" name="payWithTerminalEnabled" [(ngModel)]="payWithTerminalEnabled" />
+          Pay with card (terminal)
+        </label>
+        @if (payWithTerminalEnabled) {
+          <label>
+            Verifone POI ID
+            <input name="verifonePoiId" [(ngModel)]="verifonePoiId" required />
+          </label>
+        }
       </fieldset>
     }
 
