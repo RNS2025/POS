@@ -7,7 +7,7 @@
     "dev": "tsx watch src/main.ts",
     "build": "tsc",
     "start": "node dist/main.js",
-    "start:render": "prisma migrate deploy && node dist/main.js",
+    "start:render": "node scripts/render-start.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
