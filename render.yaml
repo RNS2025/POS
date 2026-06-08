@@ -11,8 +11,7 @@ services:
     plan: free
     healthCheckPath: /api/health
     buildCommand: npm ci --include=dev && npx prisma generate && npm run build
-    preDeployCommand: npx prisma migrate deploy
-    startCommand: npm start
+    startCommand: npm run start:render
     envVars:
       - key: NODE_ENV
         value: production
