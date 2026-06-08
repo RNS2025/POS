@@ -13,6 +13,7 @@ Client/dist/
 # Server
 Server/dist/
 Server/src/generated/
+Server/tsconfig.tsbuildinfo
 
 # IDE
 .idea/

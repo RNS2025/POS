@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "build": "tsc",
+    "build": "node -e \"try{require('fs').unlinkSync('tsconfig.tsbuildinfo')}catch(_){}\" && tsc",
     "start": "node dist/main.js",
     "start:render": "node scripts/render-start.mjs",
     "db:generate": "prisma generate",
