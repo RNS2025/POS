@@ -10,7 +10,7 @@ services:
     rootDir: Server
     plan: free
     healthCheckPath: /api/health
-    buildCommand: npm ci && npx prisma generate && npm run build && npx prisma migrate deploy
+    buildCommand: npm ci --include=dev && npx prisma generate && npm run build && npx prisma migrate deploy
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -35,6 +35,18 @@ services:
           envVarKey: RENDER_EXTERNAL_URL
       - key: VERIFONE_SIMULATOR
         value: "true"
+      - key: PLATFORM_ADMIN_EMAIL
+        sync: false
+      - key: PLATFORM_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_TENANT_NAME
+        sync: false
+      - key: SEED_TENANT_SLUG
+        sync: false
+      - key: SEED_TENANT_EMAIL
+        sync: false
+      - key: SEED_TENANT_PASSWORD
+        sync: false
 
   - type: web
     name: pos-web
