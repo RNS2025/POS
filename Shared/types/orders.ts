@@ -5,11 +5,16 @@ export type { OrderStatus } from './checkout.js';
 export type PaymentChannel = 'online' | 'terminal';
 export type PaymentActionType = 'retry' | 'refund' | 'void' | 'abort';
 
+export type OrderPaymentMethod = 'qr' | 'later' | 'terminal' | 'sms';
+
 export interface OrderListQuery {
   page?: number;
   limit?: number;
   status?: OrderStatus;
   channel?: PaymentChannel;
+  kasseId?: string;
+  staffUserId?: string;
+  paymentMethod?: OrderPaymentMethod;
   q?: string;
 }
 
@@ -21,8 +26,20 @@ export interface OrderListItem {
   currency: string;
   status: OrderStatus;
   paymentStatus: string | null;
+  paymentMethod: string | null;
   customerEmail: string | null;
+  customerPhone: string | null;
+  kasseName: string | null;
+  kasseSlug: string | null;
+  staffDisplayName: string | null;
   createdAt: string;
+}
+
+export interface OrderLineItemSummary {
+  nameSnapshot: string;
+  quantity: number;
+  unitPriceOre: number;
+  lineTotalOre: number;
 }
 
 export interface OrderListResponse {
@@ -56,11 +73,17 @@ export interface OrderDetailResponse {
   currency: string;
   status: OrderStatus;
   paymentStatus: string | null;
+  paymentMethod: string | null;
   paymentUrl: string | null;
   refundedAmountOre: number;
   refundableAmountOre: number;
   customerEmail: string | null;
+  customerPhone: string | null;
   description: string | null;
+  kasseName: string | null;
+  kasseSlug: string | null;
+  staffDisplayName: string | null;
+  lineItems: OrderLineItemSummary[];
   createdAt: string;
   updatedAt: string;
   allowedActions: PaymentActionType[];

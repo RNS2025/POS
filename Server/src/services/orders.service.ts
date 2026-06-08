@@ -19,7 +19,16 @@ export class OrdersService {
   async list(
     auth: JwtPayload,
     tenant: { id: string; slug: string },
-    query: { page?: number; limit?: number; status?: string; channel?: string; q?: string },
+    query: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      channel?: string;
+      kasseId?: string;
+      staffUserId?: string;
+      paymentMethod?: string;
+      q?: string;
+    },
   ) {
     requireStaff(auth, tenant.id, tenant.slug);
 
@@ -28,6 +37,9 @@ export class OrdersService {
     const { items, total } = await this.orders.listForTenant(tenant.id, page, limit, {
       status: query.status,
       channel: query.channel,
+      kasseId: query.kasseId,
+      staffUserId: query.staffUserId,
+      paymentMethod: query.paymentMethod,
       q: query.q,
     });
 
@@ -40,7 +52,12 @@ export class OrdersService {
         currency: o.currency,
         status: o.status as OrderStatus,
         paymentStatus: o.payment?.status ?? null,
+        paymentMethod: o.paymentMethod,
         customerEmail: o.customerEmail,
+        customerPhone: o.customerPhone,
+        kasseName: o.kasse?.name ?? null,
+        kasseSlug: o.kasse?.slug ?? null,
+        staffDisplayName: o.staffUser?.displayName ?? null,
         createdAt: o.createdAt.toISOString(),
       })),
       total,
@@ -52,7 +69,7 @@ export class OrdersService {
   async getDetail(auth: JwtPayload, tenant: { id: string; slug: string }, orderId: string) {
     requireStaff(auth, tenant.id, tenant.slug);
 
-    const order = await this.orders.findByIdForTenant(tenant.id, orderId);
+    const order = await this.orders.findDetailForTenant(tenant.id, orderId);
     if (!order) {
       throw new AppError('Order not found.', 404);
     }
@@ -68,11 +85,17 @@ export class OrdersService {
       currency: order.currency,
       status: order.status as OrderStatus,
       paymentStatus: order.payment?.status ?? null,
+      paymentMethod: order.paymentMethod,
       paymentUrl: order.payment?.paymentLinkUrl ?? null,
       refundedAmountOre: order.payment?.refundedAmountOre ?? 0,
       refundableAmountOre: meta.refundableAmountOre,
       customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone,
       description: order.description,
+      kasseName: order.kasse?.name ?? null,
+      kasseSlug: order.kasse?.slug ?? null,
+      staffDisplayName: order.staffUser?.displayName ?? null,
+      lineItems: order.lineItems,
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt.toISOString(),
       allowedActions: meta.allowedActions,

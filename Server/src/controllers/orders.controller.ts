@@ -14,6 +14,9 @@ export const listOrdersController = asyncHandler(
       limit,
       status: typeof req.query.status === 'string' ? req.query.status : undefined,
       channel: typeof req.query.channel === 'string' ? req.query.channel : undefined,
+      kasseId: typeof req.query.kasseId === 'string' ? req.query.kasseId : undefined,
+      staffUserId: typeof req.query.staffUserId === 'string' ? req.query.staffUserId : undefined,
+      paymentMethod: typeof req.query.paymentMethod === 'string' ? req.query.paymentMethod : undefined,
       q: typeof req.query.q === 'string' ? req.query.q : undefined,
     });
     res.json(result);

@@ -11,20 +11,63 @@
     <p><strong>Ref:</strong> {{ o.quickpayOrderRef }}</p>
     <p><strong>Channel:</strong> {{ o.channel === 'terminal' ? 'In-store' : 'Online' }}</p>
     <p><strong>Amount:</strong> {{ o.amountOre / 100 | currency: o.currency }}</p>
-    <p><strong>Status:</strong> {{ o.status }}</p>
+    <p>
+      <strong>Status:</strong>
+      @if (o.status === 'pending_payment') {
+        <span class="wf-badge-pending-payment">Pay later — awaiting payment</span>
+      } @else {
+        {{ o.status }}
+      }
+    </p>
     <p><strong>Payment:</strong> {{ o.paymentStatus ?? '—' }}</p>
+    @if (o.paymentMethod) {
+      <p><strong>Payment method:</strong> {{ o.paymentMethod }}</p>
+    }
+    @if (o.kasseName) {
+      <p><strong>Kasse:</strong> {{ o.kasseName }} @if (o.kasseSlug) { ({{ o.kasseSlug }}) }</p>
+    }
+    @if (o.staffDisplayName) {
+      <p><strong>Employee:</strong> {{ o.staffDisplayName }}</p>
+    }
     @if (o.refundedAmountOre > 0) {
       <p><strong>Refunded:</strong> {{ o.refundedAmountOre / 100 | currency: o.currency }}</p>
       <p><strong>Refundable remaining:</strong> {{ o.refundableAmountOre / 100 | currency: o.currency }}</p>
     }
     @if (o.customerEmail) {
-      <p><strong>Customer:</strong> {{ o.customerEmail }}</p>
+      <p><strong>Customer email:</strong> {{ o.customerEmail }}</p>
+    }
+    @if (o.customerPhone) {
+      <p><strong>Customer phone:</strong> {{ o.customerPhone }}</p>
     }
     @if (o.description) {
       <p><strong>Note:</strong> {{ o.description }}</p>
     }
     <p><strong>Created:</strong> {{ o.createdAt | date: 'medium' }}</p>
   </section>
+
+  @if (o.lineItems.length > 0) {
+    <section class="wf-panel">
+      <h2>Line items</h2>
+      <table class="wf-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Line total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of o.lineItems; track line.nameSnapshot) {
+            <tr>
+              <td>{{ line.nameSnapshot }}</td>
+              <td>{{ line.quantity }}</td>
+              <td>{{ line.lineTotalOre / 100 | currency: o.currency }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
 
   @if (o.status === 'failed' || o.status === 'cancelled' || o.status === 'pending') {
     <p>Payment did not complete — share the payment link below or refresh it.</p>

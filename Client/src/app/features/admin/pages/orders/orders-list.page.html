@@ -11,6 +11,7 @@
       <select class="wf-select" name="statusFilter" [(ngModel)]="statusFilter">
         <option value="">All</option>
         <option value="pending">Pending</option>
+        <option value="pending_payment">Pay later</option>
         <option value="captured">Captured</option>
         <option value="failed">Failed</option>
         <option value="cancelled">Cancelled</option>
@@ -24,6 +25,33 @@
         <option value="">All</option>
         <option value="online">Online</option>
         <option value="terminal">In-store</option>
+      </select>
+    </label>
+    <label>
+      Kasse
+      <select class="wf-select" name="kasseFilter" [(ngModel)]="kasseFilter">
+        <option value="">All</option>
+        @for (k of kasser(); track k.id) {
+          <option [value]="k.id">{{ k.name }} ({{ k.type }})</option>
+        }
+      </select>
+    </label>
+    <label>
+      Employee
+      <select class="wf-select" name="staffFilter" [(ngModel)]="staffFilter">
+        <option value="">All</option>
+        @for (s of staff(); track s.id) {
+          <option [value]="s.id">{{ s.displayName }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Payment
+      <select class="wf-select" name="paymentMethodFilter" [(ngModel)]="paymentMethodFilter">
+        <option value="">All</option>
+        <option value="qr">QR</option>
+        <option value="later">Pay later</option>
+        <option value="terminal">Terminal</option>
       </select>
     </label>
     <label>
@@ -41,24 +69,26 @@
         <tr>
           <th>Ref</th>
           <th>Channel</th>
+          <th>Kasse</th>
+          <th>Employee</th>
           <th>Amount</th>
           <th>Status</th>
           <th>Payment</th>
-          <th>Customer</th>
           <th>Date</th>
         </tr>
       </thead>
       <tbody>
         @for (o of items(); track o.id) {
-          <tr>
+          <tr [class.wf-row-pending-payment]="o.status === 'pending_payment'">
             <td>
               <a [routerLink]="['/', tenantSlug, 'admin', 'orders', o.id]">{{ o.quickpayOrderRef }}</a>
             </td>
             <td>{{ o.channel === 'terminal' ? 'In-store' : 'Online' }}</td>
+            <td>{{ o.kasseName ?? '—' }}</td>
+            <td>{{ o.staffDisplayName ?? '—' }}</td>
             <td>{{ o.amountOre / 100 | currency: o.currency }}</td>
-            <td>{{ o.status }}</td>
-            <td>{{ o.paymentStatus ?? '—' }}</td>
-            <td>{{ o.customerEmail ?? '—' }}</td>
+            <td>{{ statusLabel(o.status) }}</td>
+            <td>{{ paymentMethodLabel(o.paymentMethod) }}</td>
             <td>{{ o.createdAt | date: 'medium' }}</td>
           </tr>
         }

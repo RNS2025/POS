@@ -22,6 +22,9 @@ export class OrdersService {
     if (query.limit) params['limit'] = String(query.limit);
     if (query.status) params['status'] = query.status;
     if (query.channel) params['channel'] = query.channel;
+    if (query.kasseId) params['kasseId'] = query.kasseId;
+    if (query.staffUserId) params['staffUserId'] = query.staffUserId;
+    if (query.paymentMethod) params['paymentMethod'] = query.paymentMethod;
     if (query.q) params['q'] = query.q;
     return this.http.get<OrderListResponse>(`/api/v1/tenants/${tenantSlug}/orders`, { params });
   }

@@ -1,5 +1,6 @@
 export type OrderStatus =
   | 'pending'
+  | 'pending_payment'
   | 'authorized'
   | 'captured'
   | 'failed'
@@ -17,6 +18,7 @@ export type PaymentStatus =
 
 export const ORDER_STATUSES: OrderStatus[] = [
   'pending',
+  'pending_payment',
   'authorized',
   'captured',
   'failed',

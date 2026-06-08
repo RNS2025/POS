@@ -29,6 +29,9 @@ export interface CreateOrderLineInput {
 export interface OrderListFilters {
   status?: string;
   channel?: string;
+  kasseId?: string;
+  staffUserId?: string;
+  paymentMethod?: string;
   q?: string;
 }
 
@@ -40,13 +43,39 @@ export interface IOrderRepository {
     tenantId: string,
     orderId: string,
   ): Promise<(Order & { payment: Payment | null; lineItems: Array<{ nameSnapshot: string; quantity: number; lineTotalOre: number }> }) | null>;
+  findDetailForTenant(
+    tenantId: string,
+    orderId: string,
+  ): Promise<
+    | (Order & {
+        payment: Payment | null;
+        kasse: { id: string; name: string; slug: string; type: string } | null;
+        staffUser: { id: string; displayName: string | null } | null;
+        lineItems: Array<{
+          nameSnapshot: string;
+          quantity: number;
+          unitPriceOre: number;
+          lineTotalOre: number;
+        }>;
+      })
+    | null
+  >;
   updateStatus(tenantId: string, orderId: string, status: string): Promise<void>;
   listForTenant(
     tenantId: string,
     page: number,
     limit: number,
     filters?: OrderListFilters,
-  ): Promise<{ items: Array<Order & { payment: Payment | null }>; total: number }>;
+  ): Promise<{
+    items: Array<
+      Order & {
+        payment: Payment | null;
+        kasse: { name: string; slug: string } | null;
+        staffUser: { displayName: string | null } | null;
+      }
+    >;
+    total: number;
+  }>;
 }
 
 export class OrderRepository implements IOrderRepository {
@@ -125,6 +154,26 @@ export class OrderRepository implements IOrderRepository {
     });
   }
 
+  findDetailForTenant(tenantId: string, orderId: string) {
+    return prisma.order.findFirst({
+      where: { id: orderId, tenantId },
+      include: {
+        payment: true,
+        kasse: { select: { id: true, name: true, slug: true, type: true } },
+        staffUser: { select: { id: true, displayName: true } },
+        lineItems: {
+          select: {
+            nameSnapshot: true,
+            quantity: true,
+            unitPriceOre: true,
+            lineTotalOre: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+  }
+
   updateStatus(tenantId: string, orderId: string, status: string) {
     return prisma.order
       .updateMany({
@@ -141,6 +190,15 @@ export class OrderRepository implements IOrderRepository {
     }
     if (filters?.channel) {
       where.channel = filters.channel;
+    }
+    if (filters?.kasseId) {
+      where.kasseId = filters.kasseId;
+    }
+    if (filters?.staffUserId) {
+      where.staffUserId = filters.staffUserId;
+    }
+    if (filters?.paymentMethod) {
+      where.paymentMethod = filters.paymentMethod;
     }
     if (filters?.q?.trim()) {
       const q = filters.q.trim();
@@ -162,7 +220,11 @@ export class OrderRepository implements IOrderRepository {
     const [items, total] = await Promise.all([
       prisma.order.findMany({
         where,
-        include: { payment: true },
+        include: {
+          payment: true,
+          kasse: { select: { name: true, slug: true } },
+          staffUser: { select: { displayName: true } },
+        },
         skip,
         take: safeLimit,
         orderBy: { createdAt: 'desc' },

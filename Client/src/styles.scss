@@ -987,3 +987,17 @@ a.wf-btn.kasse:hover:not(:disabled) {
 .wf-mt-auto {
   margin-top: auto;
 }
+
+.wf-row-pending-payment {
+  background: var(--kasse-soft);
+}
+
+.wf-badge-pending-payment {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--kasse-soft);
+  color: var(--kasse);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
