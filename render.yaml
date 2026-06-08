@@ -10,6 +10,8 @@ services:
     runtime: node
     rootDir: Server
     plan: free
+    domains:
+      - api.rns-apps.dk
     healthCheckPath: /api/health
     buildCommand: npm ci --include=dev && npx prisma generate && npm run build
     startCommand: npm run start:render
@@ -24,16 +26,12 @@ services:
         generateValue: true
       - key: ENCRYPTION_KEY
         generateValue: true
+      - key: API_PUBLIC_URL
+        value: https://api.rns-apps.dk
       - key: APP_PUBLIC_URL
-        fromService:
-          type: web
-          name: pos-web
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://payment.rns-apps.dk
       - key: CORS_ORIGIN
-        fromService:
-          type: web
-          name: pos-web
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://payment.rns-apps.dk
       - key: VERIFONE_SIMULATOR
         value: "true"
       - key: PLATFORM_ADMIN_EMAIL
@@ -53,12 +51,14 @@ services:
     name: pos-web
     runtime: static
     rootDir: Client
+    domains:
+      - payment.rns-apps.dk
     buildCommand: npm ci && npm run build
     staticPublishPath: dist/pos-web/browser
     routes:
       - type: rewrite
         source: /api/*
-        destination: https://pos-api-x9fh.onrender.com/api/*
+        destination: https://api.rns-apps.dk/api/*
       - type: rewrite
         source: /*
         destination: /index.html
