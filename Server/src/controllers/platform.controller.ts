@@ -32,10 +32,16 @@ export const pingMerchantQuickpayController = asyncHandler(
   },
 );
 
-export const patchMerchantController = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const result = await platformService.patchMerchant(req.auth!, req.params.tenantId!, req.body);
-  res.json(result);
-});
+export const saveMerchantQuickpayController = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const result = await platformService.saveMerchantQuickpay(
+      req.auth!,
+      req.params.tenantId!,
+      req.body,
+    );
+    res.json(result);
+  },
+);
 
 export const addMerchantNoteController = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const result = await platformService.addNote(req.auth!, req.params.tenantId!, req.body);

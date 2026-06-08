@@ -2,6 +2,7 @@ export interface KioskPaymentMethods {
   qr: boolean;
   sms: boolean;
   later: boolean;
+  terminal: boolean;
 }
 
 export interface KioskCategory {
@@ -33,7 +34,7 @@ export interface KioskCheckoutLine {
   quantity: number;
 }
 
-export type KioskPaymentMethod = 'qr' | 'later';
+export type KioskPaymentMethod = 'qr' | 'later' | 'terminal';
 
 export interface KioskCheckoutRequest {
   paymentMethod: KioskPaymentMethod;
@@ -56,4 +57,15 @@ export interface KioskCheckoutLaterResponse {
   status: 'pending_payment';
 }
 
-export type KioskCheckoutResponse = KioskCheckoutQrResponse | KioskCheckoutLaterResponse;
+export interface KioskCheckoutTerminalResponse {
+  orderId: string;
+  amountOre: number;
+  currency: string;
+  status: string;
+  channel: 'terminal';
+}
+
+export type KioskCheckoutResponse =
+  | KioskCheckoutQrResponse
+  | KioskCheckoutLaterResponse
+  | KioskCheckoutTerminalResponse;

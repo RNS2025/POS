@@ -7,8 +7,8 @@ import {
   getMerchantController,
   listMerchantOrdersController,
   listMerchantsController,
-  patchMerchantController,
   pingMerchantQuickpayController,
+  saveMerchantQuickpayController,
 } from '../controllers/platform.controller.js';
 import { requireAuth, requirePlatformAdmin } from '../middleware/auth.middleware.js';
 
@@ -62,11 +62,11 @@ export function registerPlatformRoutes(app: Express) {
     pingMerchantQuickpayController,
   );
 
-  app.patch(
-    '/api/v1/platform/merchants/:tenantId',
+  app.put(
+    '/api/v1/platform/merchants/:tenantId/quickpay',
     requireAuth,
     requirePlatformAdmin,
-    patchMerchantController,
+    saveMerchantQuickpayController,
   );
 
   app.post(

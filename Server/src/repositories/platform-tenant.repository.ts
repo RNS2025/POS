@@ -75,17 +75,13 @@ function statusWhere(status: MerchantStatus): Prisma.TenantWhereInput {
     case 'attention':
       return { quickpayConfig: { lastPingOk: false } };
     case 'live':
-      return { clearhausConfirmedAt: { not: null } };
-    case 'clearhaus_pending':
       return {
         quickpayConnectedAt: { not: null },
-        clearhausConfirmedAt: null,
         quickpayConfig: { lastPingOk: true },
       };
     case 'quickpay_connected':
       return {
         quickpayConnectedAt: { not: null },
-        clearhausConfirmedAt: null,
         NOT: { quickpayConfig: { lastPingOk: false } },
         OR: [{ quickpayConfig: null }, { quickpayConfig: { lastPingOk: { not: true } } }],
       };
@@ -102,7 +98,6 @@ function statusWhere(status: MerchantStatus): Prisma.TenantWhereInput {
 export interface IPlatformTenantRepository {
   list(params: TenantListParams): Promise<{ items: TenantListRow[]; total: number }>;
   findDetailById(id: string): Promise<TenantDetailRow | null>;
-  updateClearhaus(tenantId: string, confirmed: boolean): Promise<void>;
   countByStatus(): Promise<{ total: number; byStatus: Record<MerchantStatus, number> }>;
   getOrderStats(): Promise<{ totalOrders: number; ordersLast7Days: number; capturedOrders: number }>;
 }
@@ -147,15 +142,6 @@ export class PlatformTenantRepository implements IPlatformTenantRepository {
       where: { id },
       include: tenantDetailInclude,
     });
-  }
-
-  updateClearhaus(tenantId: string, confirmed: boolean) {
-    return prisma.tenant
-      .update({
-        where: { id: tenantId },
-        data: { clearhausConfirmedAt: confirmed ? new Date() : null },
-      })
-      .then(() => undefined);
   }
 
   async countByStatus() {

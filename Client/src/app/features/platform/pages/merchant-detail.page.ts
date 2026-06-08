@@ -22,11 +22,13 @@ export class MerchantDetailPage implements OnInit {
   protected readonly error = signal('');
   protected readonly loading = signal(false);
   protected readonly pinging = signal(false);
-  protected readonly savingClearhaus = signal(false);
+  protected readonly savingQuickpay = signal(false);
   protected readonly savingNote = signal(false);
 
   protected noteBody = '';
-  protected clearhausConfirmed = false;
+  protected quickpayMerchantId = '';
+  protected quickpayPrivateKey = '';
+  protected quickpayApiKey = '';
   protected readonly statusLabel = merchantStatusLabel;
 
   private tenantId = '';
@@ -44,7 +46,6 @@ export class MerchantDetailPage implements OnInit {
     this.platform.getMerchant(this.tenantId).subscribe({
       next: (res) => {
         this.merchant.set(res);
-        this.clearhausConfirmed = res.clearhausConfirmedAt !== null;
         this.loading.set(false);
       },
       error: (err) => {
@@ -61,6 +62,31 @@ export class MerchantDetailPage implements OnInit {
     });
   }
 
+  protected saveQuickpay(): void {
+    this.savingQuickpay.set(true);
+    this.error.set('');
+
+    this.platform
+      .saveMerchantQuickpay(this.tenantId, {
+        merchantId: this.quickpayMerchantId.trim(),
+        privateKey: this.quickpayPrivateKey.trim() || undefined,
+        apiKey: this.quickpayApiKey.trim() || undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.merchant.set(res);
+          this.quickpayMerchantId = '';
+          this.quickpayPrivateKey = '';
+          this.quickpayApiKey = '';
+          this.savingQuickpay.set(false);
+        },
+        error: (err) => {
+          this.error.set(apiErrorMessage(err, 'Could not save Quickpay keys.'));
+          this.savingQuickpay.set(false);
+        },
+      });
+  }
+
   protected pingQuickpay(): void {
     this.pinging.set(true);
     this.error.set('');
@@ -68,29 +94,11 @@ export class MerchantDetailPage implements OnInit {
     this.platform.pingQuickpay(this.tenantId).subscribe({
       next: (res) => {
         this.merchant.set(res);
-        this.clearhausConfirmed = res.clearhausConfirmedAt !== null;
         this.pinging.set(false);
       },
       error: (err) => {
         this.error.set(apiErrorMessage(err, 'Quickpay test failed. Check the merchant keys.'));
         this.pinging.set(false);
-      },
-    });
-  }
-
-  protected saveClearhaus(): void {
-    this.savingClearhaus.set(true);
-    this.error.set('');
-
-    this.platform.patchMerchant(this.tenantId, { clearhausConfirmed: this.clearhausConfirmed }).subscribe({
-      next: (res) => {
-        this.merchant.set(res);
-        this.clearhausConfirmed = res.clearhausConfirmedAt !== null;
-        this.savingClearhaus.set(false);
-      },
-      error: (err) => {
-        this.error.set(apiErrorMessage(err, 'Could not update Clearhaus status.'));
-        this.savingClearhaus.set(false);
       },
     });
   }

@@ -5,7 +5,7 @@ import type {
   CreatePlatformMerchantResponse,
   CreatePlatformNoteRequest,
   PaginatedResponse,
-  PatchPlatformMerchantRequest,
+  SavePlatformQuickpayRequest,
   PlatformDashboardStats,
   PlatformMerchantDetail,
   PlatformMerchantListQuery,
@@ -79,8 +79,11 @@ export class PlatformService {
     );
   }
 
-  patchMerchant(tenantId: string, body: PatchPlatformMerchantRequest) {
-    return this.http.patch<PlatformMerchantDetail>(`/api/v1/platform/merchants/${tenantId}`, body);
+  saveMerchantQuickpay(tenantId: string, body: SavePlatformQuickpayRequest) {
+    return this.http.put<PlatformMerchantDetail>(
+      `/api/v1/platform/merchants/${tenantId}/quickpay`,
+      body,
+    );
   }
 
   addNote(tenantId: string, body: CreatePlatformNoteRequest) {

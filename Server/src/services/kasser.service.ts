@@ -56,6 +56,7 @@ function assertKioskPaymentMethods(data: {
   payWithQrEnabled?: boolean;
   payWithSmsEnabled?: boolean;
   payWithLaterEnabled?: boolean;
+  verifonePoiId?: string | null;
 }) {
   if (data.type !== 'kiosk' && data.type !== undefined) {
     return;
@@ -63,8 +64,12 @@ function assertKioskPaymentMethods(data: {
   const qr = data.payWithQrEnabled ?? true;
   const sms = data.payWithSmsEnabled ?? false;
   const later = data.payWithLaterEnabled ?? false;
-  if (!qr && !sms && !later) {
-    throw new AppError('At least one customer payment method must be enabled.', 400);
+  const terminal = Boolean(data.verifonePoiId?.trim());
+  if (!qr && !sms && !later && !terminal) {
+    throw new AppError(
+      'Enable at least one payment method or configure a Verifone terminal POI ID.',
+      400,
+    );
   }
 }
 
@@ -94,7 +99,7 @@ export class KasserService {
     requireStaff(auth, tenant.id, tenant.slug);
     const data = createSchema.parse(body);
     if (data.type === 'kiosk') {
-      assertKioskPaymentMethods({ type: 'kiosk' });
+      assertKioskPaymentMethods({ type: 'kiosk', verifonePoiId: data.verifonePoiId });
     }
     const existing = await this.kasser.findBySlug(tenant.id, data.slug);
     if (existing) {
@@ -104,7 +109,7 @@ export class KasserService {
       type: data.type,
       name: data.name,
       slug: data.slug,
-      verifonePoiId: data.type === 'register' ? data.verifonePoiId ?? null : null,
+      verifonePoiId: data.verifonePoiId ?? null,
     });
     return toSummary(k, 0);
   }
@@ -122,6 +127,8 @@ export class KasserService {
       payWithQrEnabled: data.payWithQrEnabled ?? current.payWithQrEnabled,
       payWithSmsEnabled: data.payWithSmsEnabled ?? current.payWithSmsEnabled,
       payWithLaterEnabled: data.payWithLaterEnabled ?? current.payWithLaterEnabled,
+      verifonePoiId:
+        data.verifonePoiId !== undefined ? data.verifonePoiId : current.verifonePoiId,
     });
     if (data.slug && data.slug !== current.slug) {
       const clash = await this.kasser.findBySlug(tenant.id, data.slug);
@@ -129,10 +136,7 @@ export class KasserService {
         throw new AppError('A kasse with this link slug already exists.', 409);
       }
     }
-    const k = await this.kasser.update(tenant.id, id, {
-      ...data,
-      verifonePoiId: mergedType === 'register' ? data.verifonePoiId : null,
-    });
+    const k = await this.kasser.update(tenant.id, id, data);
     if (!k) {
       throw new AppError('Kasse not found.', 404);
     }

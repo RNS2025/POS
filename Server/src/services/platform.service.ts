@@ -17,10 +17,13 @@ import { assertSlugAllowed, slugSchema } from '../validation/tenant-slug.js';
 import { toCsvRow } from '../utils/csv.js';
 import type { IQuickpayClient } from './quickpay/quickpay.client.js';
 import { quickpayClient } from './quickpay/quickpay.client.js';
+import { setupService } from './setup.service.js';
 import { toMerchantSummary } from './platform/merchant-status.js';
 
-const patchSchema = z.object({
-  clearhausConfirmed: z.boolean(),
+const quickpaySetupSchema = z.object({
+  merchantId: z.string().min(1, 'Enter the Quickpay merchant number').max(64, 'Merchant number is too long'),
+  privateKey: z.string().min(1, 'Enter the Quickpay private key').max(512).optional(),
+  apiKey: z.string().min(1, 'Enter the Quickpay payment window key').max(512).optional(),
 });
 
 const noteSchema = z.object({
@@ -49,11 +52,7 @@ export class PlatformService {
       const page = Math.max(params.page, 1);
 
       return {
-        items: items.map((t) => {
-          const summary = toMerchantSummary(t, t.quickpayConfig ? this.quickpay.buildWebhookUrl(t.id) : null);
-          const { webhookUrl: _w, ...rest } = summary;
-          return rest;
-        }),
+        items: items.map((t) => toMerchantSummary(t)),
         total,
         page,
         limit,
@@ -87,10 +86,7 @@ export class PlatformService {
     ]);
 
     const rows = items.map((t) => {
-      const summary = toMerchantSummary(
-        t,
-        t.quickpayConfig ? this.quickpay.buildWebhookUrl(t.id) : null,
-      );
+      const summary = toMerchantSummary(t);
       return toCsvRow([
         summary.name,
         summary.slug,
@@ -165,8 +161,7 @@ export class PlatformService {
         status: 'registered' as const,
         createdAt: tenant.createdAt.toISOString(),
         quickpayConnectedAt: null,
-        quickpayMerchantId: null,
-        clearhausConfirmedAt: null,
+        quickpayConfigured: false,
         lastPingAt: null,
         lastPingOk: null,
         lastPingError: null,
@@ -187,21 +182,16 @@ export class PlatformService {
       throw new AppError(`No merchant found with id ${tenantId}.`, 404);
     }
 
-    const webhookUrl = tenant.quickpayConfig
-      ? this.quickpay.buildWebhookUrl(tenant.id)
-      : null;
-
     const activeInvite = await this.invites.findActiveByTenantId(tenantId);
 
-    const summary = toMerchantSummary(
-      { ...tenant, users: tenant.users.map((u) => ({ email: u.email })) },
-      webhookUrl,
-    );
+    const summary = toMerchantSummary({
+      ...tenant,
+      users: tenant.users.map((u) => ({ email: u.email })),
+    });
 
     return {
       ...summary,
       updatedAt: tenant.updatedAt.toISOString(),
-      webhookUrl,
       users: tenant.users.map((u) => ({
         id: u.id,
         email: u.email,
@@ -254,17 +244,16 @@ export class PlatformService {
     return this.getMerchant(auth, tenantId);
   }
 
-  async patchMerchant(auth: JwtPayload, tenantId: string, input: unknown) {
+  async saveMerchantQuickpay(auth: JwtPayload, tenantId: string, input: unknown) {
     this.requirePlatformAdmin(auth);
-    const data = patchSchema.parse(input);
+    quickpaySetupSchema.parse(input);
 
     const tenant = await tenantRepository.findById(tenantId);
     if (!tenant) {
       throw new AppError(`No merchant found with id ${tenantId}.`, 404);
     }
 
-    await this.tenants.updateClearhaus(tenantId, data.clearhausConfirmed);
-
+    await setupService.saveQuickpayForTenant(tenantId, input);
     return this.getMerchant(auth, tenantId);
   }
 

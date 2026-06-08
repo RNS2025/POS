@@ -16,7 +16,6 @@ model Tenant {
   slug                 String                 @unique
   quickpayConnectedAt  DateTime?              @map("quickpay_connected_at")
   verifoneConnectedAt  DateTime?              @map("verifone_connected_at")
-  clearhausConfirmedAt DateTime?              @map("clearhaus_confirmed_at")
   createdAt            DateTime               @default(now()) @map("created_at")
   updatedAt            DateTime               @updatedAt @map("updated_at")
   users                User[]

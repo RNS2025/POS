@@ -13,8 +13,13 @@
 
 @if (catalog(); as c) {
   <div class="wf-checkout-methods">
+    @if (c.paymentMethods.terminal) {
+      <pos-button type="button" variant="primary" [loading]="loading()" (pressed)="pay('terminal')">
+        Pay with card
+      </pos-button>
+    }
     @if (c.paymentMethods.qr) {
-      <pos-button type="button" variant="primary" [loading]="loading()" (pressed)="pay('qr')">
+      <pos-button type="button" variant="secondary" [loading]="loading()" (pressed)="pay('qr')">
         Pay with QR
       </pos-button>
     }

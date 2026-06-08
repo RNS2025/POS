@@ -74,20 +74,31 @@ export class KasseFormPage implements OnInit {
   protected save(): void {
     this.saving.set(true);
     this.error.set('');
-    const body = {
-      type: this.type,
-      name: this.name,
-      slug: this.slug,
-      verifonePoiId: this.type === 'register' ? this.verifonePoiId || undefined : undefined,
-      payWithQrEnabled: this.type === 'kiosk' ? this.payWithQrEnabled : undefined,
-      payWithSmsEnabled: this.type === 'kiosk' ? this.payWithSmsEnabled : undefined,
-      payWithLaterEnabled: this.type === 'kiosk' ? this.payWithLaterEnabled : undefined,
-      isActive: this.isEdit ? this.isActive : undefined,
-    };
+    const poi = this.verifonePoiId.trim();
+    const kioskPayments =
+      this.type === 'kiosk'
+        ? {
+            payWithQrEnabled: this.payWithQrEnabled,
+            payWithSmsEnabled: this.payWithSmsEnabled,
+            payWithLaterEnabled: this.payWithLaterEnabled,
+          }
+        : {};
 
     const req = this.isEdit
-      ? this.kasserApi.update(this.tenantSlug, this.kasseId, body)
-      : this.kasserApi.create(this.tenantSlug, body);
+      ? this.kasserApi.update(this.tenantSlug, this.kasseId, {
+          type: this.type,
+          name: this.name,
+          slug: this.slug,
+          verifonePoiId: poi || null,
+          ...kioskPayments,
+          isActive: this.isActive,
+        })
+      : this.kasserApi.create(this.tenantSlug, {
+          type: this.type,
+          name: this.name,
+          slug: this.slug,
+          verifonePoiId: poi || undefined,
+        });
 
     req.subscribe({
       next: () => {

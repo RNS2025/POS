@@ -27,12 +27,11 @@
       <copy-field [value]="kioskUrl()" ariaLabel="Kasse URL" />
     }
 
-    @if (type === 'register') {
-      <label>
-        Verifone POI ID
-        <input name="verifonePoiId" [(ngModel)]="verifonePoiId" />
-      </label>
-    }
+    <label>
+      Verifone POI ID (optional)
+      <input name="verifonePoiId" [(ngModel)]="verifonePoiId" />
+    </label>
+    <p class="wf-hint">When set, this iPad can accept card payments on the linked terminal.</p>
 
     @if (type === 'kiosk') {
       <fieldset class="wf-fieldset">

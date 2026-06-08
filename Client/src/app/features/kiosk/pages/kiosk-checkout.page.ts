@@ -35,7 +35,7 @@ export class KioskCheckoutPage implements OnInit {
     });
   }
 
-  protected pay(method: 'qr' | 'later'): void {
+  protected pay(method: 'qr' | 'later' | 'terminal'): void {
     if (this.cart.items().length === 0) {
       return;
     }
@@ -54,6 +54,11 @@ export class KioskCheckoutPage implements OnInit {
             this.cart.clear();
             void this.router.navigate(['/', this.tenantSlug, 'kiosk', this.kasseSlug, 'checkout', 'qr'], {
               queryParams: { orderId: res.orderId, paymentUrl: res.paymentUrl },
+            });
+          } else if ('channel' in res && res.channel === 'terminal') {
+            this.cart.clear();
+            void this.router.navigate(['/', this.tenantSlug, 'kiosk', this.kasseSlug, 'checkout', 'success'], {
+              queryParams: { orderId: res.orderId },
             });
           } else {
             this.cart.clear();

@@ -1,26 +1,41 @@
 ---
-description: No unsolicited frontend design or CSS — implement only what is explicitly requested
+description: Frontend design — follow the RNS POS design system from docs/design/interactive.html
 globs: Client/**/*.ts,Client/**/*.html,Client/**/*.scss
 alwaysApply: true
 ---
 
-# Frontend design — minimal by default
+# Frontend design — RNS POS design system
 
 When working on the Angular client (`Client/`):
 
-## Do not add design or styling unless I explicitly ask
+## Apply styling by default
 
-- Do **not** write or edit CSS/SCSS (component styles, `styles.scss`, layout, colors, spacing, typography, animations, responsive breakpoints).
-- Do **not** add inline `style` attributes or styling-oriented utility classes for visual polish.
-- Do **not** introduce UI/design libraries (e.g. Tailwind, Bootstrap, Angular Material) unless I request them.
-- Do **not** “improve”, “polish”, or “make it look nice” on your own.
+- Implement UI using the design tokens and patterns from **`docs/design/interactive.html`**.
+- Global styles live in **`Client/src/styles.scss`** (CSS variables, `.wf-*` utilities, shell layouts).
+- Reuse shared components (`pos-button`, `confirm-dialog`, `copy-field`, `paginator`, `form-actions`, `async-shell`) — they carry the design system classes.
+- Do **not** add UI libraries (Tailwind, Bootstrap, Angular Material) unless explicitly requested.
 
-## Only add what I ask for
+## Shell accents (per site)
 
-- Implement the **specific feature, logic, route, service, or markup** I requested — nothing extra.
-- HTML should be **minimal and functional** (structure needed for the feature to work), not a designed UI.
-- If styling is required for the feature to function (e.g. hiding an element), prefer the smallest possible change and only when necessary — otherwise skip styling and tell me if design is needed.
+| Shell | `data-shell` | Accent |
+|-------|----------------|--------|
+| Admin | `admin` | Violet |
+| Platform | `platform` | Red |
+| Kiosk | `kiosk` | Green |
+| Kasse | `kasse` | Amber |
 
-## When I do ask for design
+Wrap pages in the matching shell layout (e.g. `AdminLayout` for `/:slug/admin/*`).
 
-- Follow my instructions exactly; do not expand scope beyond what I described.
+## Markup conventions
+
+- Lists: `.wf-table`, `.wf-badge`, `.wf-toolbar`, `pos-paginator`
+- Forms: `.wf-form`, `.wf-fieldset`, `form-actions`
+- States: `.wf-loading`, `.wf-empty`, `.wf-alert.error`
+- Auth: `.auth-page` + `.auth-card`
+- Buttons: `pos-button` or `.wf-btn` (+ `.primary`, `.danger`, `.ghost`)
+
+## Scope
+
+- Match existing patterns in neighboring pages before inventing new ones.
+- Keep markup semantic; avoid inline `style` attributes.
+- Consult `modern-web-guidance` skill for dialog, form, and layout CSS when unsure.

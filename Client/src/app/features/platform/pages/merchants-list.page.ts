@@ -14,7 +14,6 @@ const STATUS_OPTIONS: { value: '' | MerchantStatus; label: string }[] = [
   { value: '', label: 'All statuses' },
   { value: 'registered', label: 'Registered' },
   { value: 'quickpay_connected', label: 'Quickpay connected' },
-  { value: 'clearhaus_pending', label: 'Awaiting Clearhaus' },
   { value: 'live', label: 'Live' },
   { value: 'attention', label: 'Needs attention' },
 ];

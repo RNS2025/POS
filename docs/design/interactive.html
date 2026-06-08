@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>RNS POS — Site &amp; page layout prototype</title>
+  <style>
+    /* Design tokens — rem-based, fluid layout */
+    html {
+      font-size: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+    }
+    :root {
+      color-scheme: light;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f0f2f5;
+      --color-gray-200: #e2e8f0;
+      --color-gray-400: #94a3b8;
+      --color-gray-600: #5c6370;
+      --color-gray-900: #1a1d23;
+      --color-blue-600: #2563eb;
+      --color-blue-100: #dbeafe;
+      --color-green-600: #059669;
+      --color-green-100: #d1fae5;
+      --color-amber-600: #d97706;
+      --color-amber-100: #fef3c7;
+      --color-violet-600: #7c3aed;
+      --color-violet-100: #ede9fe;
+      --color-red-600: #dc2626;
+      --color-red-100: #fee2e2;
+      --size-touch-min: 1.5rem;
+      --size-touch-pos: 3rem;
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --sidebar-proto: clamp(11rem, 22vw, 16.25rem);
+      --sidebar-admin: clamp(9rem, 18vw, 11.25rem);
+      --radius-sm: 0.375rem;
+      --radius-md: 0.625rem;
+      --radius-lg: 1rem;
+      --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+      --font-mono: ui-monospace, "Cascadia Code", monospace;
+      --bg: var(--color-gray-100);
+      --panel: #fff;
+      --border: var(--color-gray-200);
+      --text: var(--color-gray-900);
+      --muted: var(--color-gray-600);
+      --accent: var(--color-blue-600);
+      --accent-soft: var(--color-blue-100);
+      --kiosk: var(--color-green-600);
+      --kiosk-soft: var(--color-green-100);
+      --kasse: var(--color-amber-600);
+      --kasse-soft: var(--color-amber-100);
+      --admin: var(--color-violet-600);
+      --admin-soft: var(--color-violet-100);
+      --platform: var(--color-red-600);
+      --platform-soft: var(--color-red-100);
+      --tile: var(--color-gray-50);
+      --shadow: 0 0.25rem 1.5rem rgba(0,0,0,.08);
+      --ui-accent: var(--accent);
+      --ui-accent-soft: var(--accent-soft);
+      --ui-topbar-bg: var(--color-gray-50);
+    }
+    #frame-wrap[data-shell="kiosk"] { --ui-accent: var(--kiosk); --ui-accent-soft: var(--kiosk-soft); }
+    #frame-wrap[data-shell="kasse"] { --ui-accent: var(--kasse); --ui-accent-soft: var(--kasse-soft); }
+    #frame-wrap[data-shell="admin"] { --ui-accent: var(--admin); --ui-accent-soft: var(--admin-soft); }
+    #frame-wrap[data-shell="platform"] { --ui-accent: var(--platform); --ui-accent-soft: var(--platform-soft); }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.45;
+    }
+    :focus-visible {
+      outline: 0.125rem solid var(--ui-accent, var(--accent));
+      outline-offset: 0.125rem;
+    }
+    header.proto-header {
+      background: var(--text);
+      color: #fff;
+      padding: var(--space-3) var(--space-5);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-3) var(--space-5);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+    }
+    header.proto-header h1 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    header.proto-header .hint {
+      font-size: .8rem;
+      opacity: .75;
+      flex: 1 1 12rem;
+      min-width: 0;
+    }
+    .site-tabs {
+      display: flex;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    @media (min-width: 48rem) {
+      .site-tabs { width: auto; }
+    }
+    .site-tabs button {
+      border: none;
+      padding: var(--space-3) var(--space-4);
+      min-block-size: var(--size-touch-min);
+      border-radius: var(--radius-sm);
+      font-size: .85rem;
+      cursor: pointer;
+      background: rgba(255,255,255,.15);
+      color: #fff;
+    }
+    .site-tabs button:hover { background: rgba(255,255,255,.25); }
+    .site-tabs button.active { background: #fff; color: var(--text); font-weight: 600; }
+    .site-tabs button[data-site="platform"].active { color: var(--platform); }
+    .site-tabs button[data-site="admin"].active { color: var(--admin); }
+    .site-tabs button[data-site="kiosk"].active { color: var(--kiosk); }
+    .site-tabs button[data-site="kasse"].active { color: var(--kasse); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      min-height: calc(100vh - 3.25rem);
+      width: 100%;
+    }
+    @media (min-width: 56.25rem) {
+      .layout {
+        grid-template-columns: var(--sidebar-proto) minmax(0, 1fr);
+      }
+    }
+
+    .sidebar {
+      background: var(--panel);
+      border-bottom: 0.0625rem solid var(--border);
+      padding: var(--space-4);
+      overflow-y: auto;
+    }
+    @media (min-width: 56.25rem) {
+      .sidebar {
+        border-bottom: none;
+        border-right: 0.0625rem solid var(--border);
+      }
+    }
+    .sidebar h2 {
+      margin: 0 0 var(--space-1);
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+    }
+    .sidebar .device-badge {
+      display: inline-block;
+      font-size: .7rem;
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-3);
+      background: var(--bg);
+      color: var(--muted);
+    }
+    .page-list { list-style: none; margin: 0; padding: 0; }
+    .page-list li { margin-bottom: var(--space-1); }
+    .page-list button {
+      width: 100%;
+      text-align: left;
+      border: 0.0625rem solid transparent;
+      background: none;
+      padding: var(--space-3) var(--space-3);
+      min-block-size: var(--size-touch-min);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: .85rem;
+      color: var(--text);
+    }
+    .page-list button:hover { background: var(--bg); }
+    .page-list button.active {
+      background: var(--ui-accent-soft, var(--accent-soft));
+      border-color: var(--ui-accent, var(--accent));
+      font-weight: 600;
+    }
+    .page-list .route {
+      display: block;
+      font-size: .7rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      margin-top: var(--space-1);
+    }
+    .sidebar-notes {
+      margin-top: var(--space-5);
+      padding-top: var(--space-4);
+      border-top: 0.0625rem solid var(--border);
+      font-size: .8rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .main {
+      padding: clamp(var(--space-4), 3vw, var(--space-6));
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-4);
+      width: 100%;
+      min-width: 0;
+    }
+    .page-title {
+      width: 100%;
+    }
+    .page-title h3 { margin: 0 0 var(--space-1); font-size: 1.25rem; }
+    .page-title p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+    /* Device frames */
+    .frame-wrap {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+    .frame-desktop {
+      width: 100%;
+      background: var(--panel);
+      border: 0.0625rem solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .frame-ipad {
+      width: 100%;
+      max-width: min(100%, 51.25rem);
+      aspect-ratio: 4 / 3;
+      background: #111;
+      border-radius: var(--space-6);
+      padding: clamp(var(--space-3), 2vw, var(--space-4));
+      box-shadow: var(--shadow), inset 0 0 0 0.125rem #333;
+      margin-inline: auto;
+    }
+    .frame-ipad .screen {
+      width: 100%;
+      height: 100%;
+      background: var(--panel);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      container-type: inline-size;
+    }
+
+    /* Wireframe chrome inside frames */
+    .wf-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 0.0625rem solid var(--border);
+      flex-wrap: wrap;
+      font-size: .9rem;
+      background: var(--ui-topbar-bg);
+      flex-shrink: 0;
+    }
+    .wf-topbar .brand { font-weight: 600; font-size: 1rem; }
+    .wf-topbar .sub { font-size: .75rem; color: var(--muted); }
+    .wf-topbar .actions { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+    .wf-employee {
+      display: inline-flex;
+      align-items: center;
+      padding: var(--space-1) var(--space-3);
+      border-radius: 999px;
+      background: var(--ui-accent-soft);
+      color: var(--ui-accent);
+      font-size: .8rem;
+      font-weight: 600;
+    }
+    .wf-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-2) var(--space-4);
+      min-block-size: var(--size-touch-min);
+      min-inline-size: var(--size-touch-min);
+      border-radius: var(--radius-sm);
+      border: 0.0625rem solid var(--border);
+      background: var(--panel);
+      font-size: .85rem;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      touch-action: manipulation;
+    }
+    .frame-ipad .wf-btn,
+    .frame-ipad .wf-chip,
+    .frame-ipad .wf-tile {
+      min-block-size: var(--size-touch-pos);
+      min-inline-size: var(--size-touch-pos);
+    }
+    .wf-btn.block { width: 100%; padding-block: var(--space-4); font-size: 1rem; font-weight: 600; }
+    .wf-btn.primary { background: var(--ui-accent, var(--accent)); color: #fff; border-color: var(--ui-accent, var(--accent)); }
+    .wf-btn.kiosk { background: var(--kiosk); color: #fff; border-color: var(--kiosk); }
+    .wf-btn.kasse { background: var(--kasse); color: #fff; border-color: var(--kasse); }
+    .wf-btn.danger { border-color: #fca5a5; color: #b91c1c; background: #fff; }
+    .wf-btn.ghost { background: transparent; border-color: transparent; }
+
+    .wf-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+    @media (min-width: 40rem) {
+      .wf-body { flex-direction: row; }
+    }
+    .wf-sidebar {
+      width: 100%;
+      border-bottom: 0.0625rem solid var(--border);
+      padding: var(--space-3) 0;
+      background: #fafbfc;
+      flex-shrink: 0;
+    }
+    @media (min-width: 40rem) {
+      .wf-sidebar {
+        width: var(--sidebar-admin);
+        border-bottom: none;
+        border-right: 0.0625rem solid var(--border);
+      }
+    }
+    .wf-sidebar a, .wf-nav-item {
+      display: block;
+      padding: var(--space-2) var(--space-4);
+      font-size: .85rem;
+      color: var(--text);
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .wf-sidebar a:hover, .wf-nav-item:hover { background: var(--bg); }
+    .wf-sidebar a.active, .wf-nav-item.active {
+      background: var(--ui-accent-soft, var(--accent-soft));
+      font-weight: 600;
+      border-inline-start: 0.1875rem solid var(--ui-accent, var(--accent));
+    }
+    .wf-content { flex: 1; padding: var(--space-4); overflow: auto; min-block-size: 0; width: 100%; }
+
+    .wf-chips { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3); }
+    .wf-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: var(--space-3) var(--space-4);
+      border-radius: 999px;
+      border: 0.0625rem solid var(--border);
+      font-size: .9rem;
+      background: var(--panel);
+      cursor: pointer;
+      font-family: inherit;
+      touch-action: manipulation;
+    }
+    .wf-chip.active { background: var(--ui-accent, var(--text)); color: #fff; border-color: var(--ui-accent, var(--text)); }
+
+    .wf-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 7.5rem), 1fr));
+      gap: var(--space-3);
+    }
+    @container (min-width: 32.5rem) {
+      .wf-grid { grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); }
+    }
+    @container (min-width: 42.5rem) {
+      .wf-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    .wf-tile {
+      background: var(--tile);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      text-align: center;
+      cursor: pointer;
+      border: 0.125rem solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: var(--space-2);
+      touch-action: manipulation;
+      transition: border-color .15s, background .15s;
+    }
+    .wf-tile:hover, .wf-tile:focus-visible { border-color: var(--ui-accent, var(--accent)); background: var(--ui-accent-soft, var(--accent-soft)); }
+    .wf-tile .img {
+      height: 3.5rem;
+      background: var(--color-gray-200);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-1);
+    }
+    .wf-tile .name { font-size: .95rem; font-weight: 600; line-height: 1.2; }
+    .wf-tile .price { font-size: .85rem; color: var(--muted); font-weight: 500; }
+    .wf-tile.compact { padding: var(--space-3) var(--space-2); }
+    .wf-tile.compact .name::before { content: "+ "; color: var(--ui-accent); font-weight: 700; }
+    .wf-tile.compact .name { font-size: .8rem; }
+    .wf-thumb {
+      display: inline-block;
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, #e8e4df, #d4cfc8);
+      vertical-align: middle;
+    }
+    .wf-thumb.empty {
+      background: var(--border);
+      color: var(--muted);
+      font-size: .7rem;
+      line-height: 2.25rem;
+      text-align: center;
+    }
+    .wf-image-preview {
+      margin: var(--space-2) 0 var(--space-4);
+      max-width: min(100%, 12.5rem);
+      min-height: 7.5rem;
+      border: 0.0625rem dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      font-size: .8rem;
+      color: var(--muted);
+      background: var(--bg);
+    }
+    .wf-image-preview.has-image {
+      border-style: solid;
+      background: linear-gradient(135deg, #e8e4df, #d4cfc8);
+      color: transparent;
+      min-height: 8.75rem;
+    }
+
+    .wf-footer-bar {
+      padding: var(--space-4);
+      border-top: 0.0625rem solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+      background: var(--ui-topbar-bg);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .wf-hint { font-size: .8rem; color: var(--muted); margin: 0 0 var(--space-3); }
+    .wf-hint--inline { display: inline; margin: 0; }
+
+    .wf-split { display: flex; flex: 1; flex-direction: column; overflow: hidden; min-height: 0; }
+    @media (min-width: 40rem) {
+      .wf-split { flex-direction: row; }
+    }
+    .wf-split-left { flex: 1.2; padding: var(--space-3); overflow: auto; border-bottom: 0.0625rem solid var(--border); min-width: 0; }
+    @media (min-width: 40rem) {
+      .wf-split-left { border-bottom: none; border-right: 0.0625rem solid var(--border); }
+    }
+    .wf-split-right {
+      flex: 0.8;
+      padding: var(--space-3);
+      background: var(--color-gray-50);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      min-width: 0;
+    }
+    .wf-cart-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) 0;
+      border-bottom: 0.0625rem solid var(--border);
+      flex-wrap: wrap;
+      font-size: .9rem;
+    }
+    .wf-qty {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    .wf-qty button {
+      min-block-size: var(--size-touch-pos);
+      min-inline-size: var(--size-touch-pos);
+      border: 0.0625rem solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--panel);
+      font-size: 1.1rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .wf-cart-total {
+      margin-top: auto;
+      padding-top: var(--space-4);
+      font-weight: 700;
+      font-size: 1.35rem;
+    }
+    .wf-panel-sale {
+      background: var(--ui-accent-soft);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-3);
+    }
+    .wf-panel-sale strong { display: block; margin-bottom: var(--space-2); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .wf-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+    .wf-table th, .wf-table td {
+      text-align: left;
+      padding: var(--space-3);
+      border-bottom: 0.0625rem solid var(--border);
+    }
+    .wf-table th { background: #f8fafc; font-weight: 600; }
+    .wf-badge {
+      display: inline-block;
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .wf-badge.live { background: #d1fae5; color: #065f46; }
+    .wf-badge.pending { background: #fef3c7; color: #92400e; }
+    .wf-badge.attention { background: #fee2e2; color: #991b1b; }
+
+    .wf-form label {
+      display: block;
+      margin-bottom: var(--space-3);
+      font-size: .85rem;
+    }
+    .wf-form input, .wf-form textarea, .wf-form select, .wf-input, .wf-search, .wf-select {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin-top: var(--space-2);
+      padding: var(--space-3);
+      min-block-size: var(--size-touch-min);
+      border: 0.0625rem solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .9rem;
+    }
+    .wf-search { margin-bottom: var(--space-3); }
+    .wf-fieldset {
+      border: 0.0625rem solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin: var(--space-4) 0;
+    }
+    .wf-fieldset legend { font-size: .85rem; font-weight: 600; padding: 0 var(--space-2); }
+    .wf-link-row {
+      display: flex;
+      gap: var(--space-2);
+      align-items: center;
+      flex-wrap: wrap;
+      margin: var(--space-2) 0;
+    }
+    .wf-link-row code, .wf-link-row .wf-input { flex: 1; font-size: .8rem; }
+    .wf-empty {
+      text-align: center;
+      padding: var(--space-8);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .wf-success {
+      text-align: center;
+      padding: var(--space-8) var(--space-6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+    }
+    .wf-success h2 { margin: 0 0 var(--space-2); font-size: 1.5rem; }
+    .wf-pin-display {
+      font-size: 2rem;
+      letter-spacing: .35em;
+      margin: var(--space-5) 0;
+      font-family: var(--font-mono);
+    }
+    .wf-pinpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-3);
+      width: 100%;
+      max-width: 17.5rem;
+      margin: 0 auto var(--space-5);
+    }
+    .wf-pinpad button {
+      min-block-size: 3.5rem;
+      min-inline-size: 3.5rem;
+      border: 0.0625rem solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--panel);
+      font-size: 1.25rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      touch-action: manipulation;
+    }
+    .wf-pinpad button.wide { grid-column: span 3; font-size: 1rem; }
+    .wf-qr-box {
+      width: min(100%, 12.5rem);
+      aspect-ratio: 1;
+      margin: 0 auto var(--space-5);
+      border: 0.1875rem solid var(--ui-accent);
+      border-radius: var(--radius-md);
+      background: repeating-linear-gradient(45deg, var(--color-gray-900) 0 0.25rem, var(--panel) 0.25rem 0.5rem);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .wf-qr-box span {
+      background: var(--panel);
+      padding: var(--space-2) var(--space-3);
+      font-size: .75rem;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+    }
+    .wf-waiting {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-4);
+      border-radius: 999px;
+      background: var(--ui-accent-soft);
+      color: var(--ui-accent);
+      font-size: .85rem;
+      margin-top: var(--space-3);
+    }
+    .wf-countdown { font-size: .9rem; color: var(--muted); margin-top: var(--space-5); }
+    .wf-icon-ok {
+      width: 4rem;
+      height: 4rem;
+      border-radius: 50%;
+      background: var(--kiosk-soft);
+      color: var(--kiosk);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: var(--space-4);
+    }
+    .iteration-panel {
+      width: 100%;
+      background: #fffbeb;
+      border: 0.0625rem solid #fcd34d;
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4);
+      font-size: .85rem;
+      line-height: 1.5;
+    }
+    .iteration-panel strong { color: #92400e; }
+    .features-panel {
+      width: 100%;
+      background: var(--panel);
+      border: 0.0625rem solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-4) var(--space-5);
+      font-size: .85rem;
+      line-height: 1.55;
+    }
+    .features-panel h4 {
+      margin: 0 0 var(--space-3);
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-3);
+    }
+    .features-grid section ul {
+      margin: var(--space-2) 0 0;
+      padding-left: 1.125rem;
+    }
+    .features-grid section li { margin-bottom: var(--space-1); }
+    .flow-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      align-items: center;
+      margin-top: var(--space-2);
+      padding-top: var(--space-3);
+      border-top: 0.0625rem solid var(--border);
+    }
+    .flow-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-1) var(--space-3);
+      border-radius: var(--radius-sm);
+      background: var(--ui-accent-soft, var(--accent-soft));
+      font-size: .8rem;
+    }
+    .flow-chip button {
+      border: none;
+      background: none;
+      color: var(--ui-accent, var(--accent));
+      font-weight: 600;
+      cursor: pointer;
+      font-size: inherit;
+      padding: 0;
+      text-decoration: underline;
+    }
+    .features-meta {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-bottom: var(--space-2);
+    }
+    .features-meta code { font-size: .7rem; }
+    .hidden { display: none !important; }
+
+    /* Layout utilities — replace inline px styles in wireframes */
+    .wf-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+      margin-bottom: var(--space-3);
+    }
+    .wf-section-title { margin: 0 0 var(--space-4); }
+    .wf-section-title--spaced { margin: var(--space-4) 0 var(--space-2); }
+    .wf-section-title--top { margin: var(--space-5) 0 var(--space-2); }
+    .wf-muted-sm { font-size: .8rem; color: var(--muted); }
+    .wf-muted-sm--spaced { font-size: .8rem; color: var(--muted); margin-top: var(--space-3); }
+    .wf-muted-xs { font-size: .75rem; color: var(--muted); }
+    .wf-stack-top { margin-top: var(--space-4); }
+    .wf-stack-top-lg { margin-top: var(--space-6); }
+    .wf-inline-gap { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+    .wf-setup-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-6);
+    }
+    @media (min-width: 48rem) {
+      .wf-setup-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .wf-filter-row { margin: 0 0 var(--space-3); }
+    .wf-center { justify-content: center; }
+    .wf-mt-auto { margin-top: auto; }
+    .wf-muted-inline { font-size: .85rem; color: var(--muted); }
+    .wf-narrow-block { width: 100%; max-width: 17.5rem; }
+    .sidebar-notes--flow { margin-top: var(--space-3); }
+  </style>
+</head>
+<body>
+
+<header class="proto-header">
+  <h1>RNS POS layout prototype</h1>
+  <span class="hint">Vælg side i menuen · tryk i wireframe · touch targets 3rem på iPad · rem-baseret responsivt layout</span>
+  <nav class="site-tabs" aria-label="Sites">
+    <button type="button" data-site="platform" class="active">RNS platform</button>
+    <button type="button" data-site="admin">Merchant admin</button>
+    <button type="button" data-site="kiosk">Customer kiosk</button>
+    <button type="button" data-site="kasse">Staff kasse</button>
+  </nav>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="page-title" id="page-title"></div>
+    <div class="features-panel" id="features-panel"></div>
+    <div class="iteration-panel" id="iteration-notes"></div>
+    <div class="frame-wrap" id="frame-wrap"></div>
+  </main>
+</div>
+
+<script>
+(function () {
+  const SLUG = 'demo-shop';
+
+  function adminNav(active) {
+    const items = [
+      ['admin-products', 'Products'],
+      ['admin-categories', 'Categories'],
+      ['admin-kasser', 'Kasser'],
+      ['admin-staff', 'Staff'],
+      ['admin-orders', 'Orders'],
+      ['admin-setup', 'Setup'],
+    ];
+    return `<nav class="wf-sidebar">${items.map(([id, label]) =>
+      `<button type="button" class="wf-nav-item ${active === id ? 'active' : ''}" data-goto="admin/${id}">${label}</button>`
+    ).join('')}</nav>`;
+  }
+
+  const SITES = {
+    platform: {
+      label: 'RNS platform',
+      device: 'Desktop — RNS staff',
+      notes: 'Paginated merchant list, support notes, Quickpay health. Not used on iPad.',
+      pages: [
+        { id: 'platform-merchants', route: '/platform/merchants', title: 'Merchant list', desc: 'All merchants — status, filters, quick links' },
+        { id: 'platform-detail', route: '/platform/merchants/:tenantId', title: 'Merchant detail', desc: 'Quickpay status, notes, re-ping' },
+        { id: 'platform-new', route: '/platform/merchants/new', title: 'Create merchant', desc: 'Pre-create tenant — copy invite link for customer' },
+        { id: 'platform-invite', route: '/platform/merchants/new', title: 'Invite link ready', desc: 'Send link manually — no automatic email' },
+      ],
+    },
+    admin: {
+      label: 'Merchant admin',
+      device: 'Desktop — shop owner',
+      notes: 'Products, categories, per-iPad visibility, kasser, orders, setup.',
+      pages: [
+        { id: 'admin-products', route: `/${SLUG}/admin/products`, title: 'Products', desc: 'Paginated catalog — pick category from merchant list' },
+        { id: 'admin-categories', route: `/${SLUG}/admin/categories`, title: 'Categories', desc: 'Merchant-defined groups — drive iPad filter chips' },
+        { id: 'admin-category-new', route: `/${SLUG}/admin/categories/new`, title: 'Add category', desc: 'Name + sort order' },
+        { id: 'admin-category-edit', route: `/${SLUG}/admin/categories/:id`, title: 'Edit category', desc: 'Rename, reorder, deactivate' },
+        { id: 'admin-product-new', route: `/${SLUG}/admin/products/new`, title: 'Add product', desc: 'Name, price, category, image' },
+        { id: 'admin-product-edit', route: `/${SLUG}/admin/products/:id`, title: 'Edit product', desc: 'Price, active, visible on which kasser/iPads' },
+        { id: 'admin-kasser', route: `/${SLUG}/admin/kasser`, title: 'Kasser', desc: 'Self-service + register iPads — type, link, products' },
+        { id: 'admin-kasse-new', route: `/${SLUG}/admin/kasser/new`, title: 'Add kasse', desc: 'Choose Self-service or Register, then name + link slug' },
+        { id: 'admin-kasse-edit', route: `/${SLUG}/admin/kasser/:kasseId`, title: 'Edit register', desc: 'Type Register — PIN, optional terminal, products' },
+        { id: 'admin-kiosk-edit', route: `/${SLUG}/admin/kasser/:kioskId`, title: 'Edit self-service', desc: 'Type Self-service — public kiosk link, products' },
+        { id: 'admin-kasse-terrace', route: `/${SLUG}/admin/kasser/:id`, title: 'Edit Terrace', desc: 'Example: different product subset per register' },
+        { id: 'admin-staff', route: `/${SLUG}/admin/staff`, title: 'Staff', desc: 'Employees + PIN (pinkode) for kasse' },
+        { id: 'admin-staff-new', route: `/${SLUG}/admin/staff/new`, title: 'Add staff', desc: 'Display name + PIN' },
+        { id: 'admin-staff-edit', route: `/${SLUG}/admin/staff/:userId`, title: 'Edit staff', desc: 'Reset PIN, deactivate' },
+        { id: 'admin-orders', route: `/${SLUG}/admin/orders`, title: 'Orders', desc: 'Filter by kasse and employee' },
+        { id: 'admin-order-detail', route: `/${SLUG}/admin/orders/:orderId`, title: 'Order detail', desc: 'Kasse, employee, payment rail' },
+        { id: 'admin-setup', route: `/${SLUG}/admin/setup`, title: 'Setup', desc: 'Quickpay + tenant Verifone credentials' },
+      ],
+    },
+    kiosk: {
+      label: 'Customer kiosk',
+      device: 'iPad landscape — fixed at counter (Guided Access)',
+      notes: 'Each self-service iPad bookmarks its own /kiosk/{slug} link. Merchant enables QR, SMS, and/or Pay later (like pos.rns-apps.dk).',
+      pages: [
+        { id: 'kiosk-phone', route: `/${SLUG}/kiosk/customer/start`, title: 'Phone entry', desc: 'When SMS or Pay later enabled — Start køb' },
+        { id: 'kiosk-catalog', route: `/${SLUG}/kiosk/customer`, title: 'Catalog', desc: 'Dedicated link — products for this kiosk kasse' },
+        { id: 'kiosk-cart', route: `/${SLUG}/kiosk/customer/cart`, title: 'Cart', desc: 'Review items before checkout' },
+        { id: 'kiosk-checkout', route: `/${SLUG}/kiosk/customer/checkout`, title: 'Checkout', desc: 'Pick payment method (QR / SMS / Later)' },
+        { id: 'kiosk-pay-qr', route: `/${SLUG}/kiosk/customer/checkout/qr`, title: 'Pay with QR', desc: 'Full-screen Quickpay QR on iPad' },
+        { id: 'kiosk-pay-sms', route: `/${SLUG}/kiosk/customer/checkout/sms`, title: 'Pay with SMS', desc: 'Send payment link to phone' },
+        { id: 'kiosk-pay-later', route: `/${SLUG}/kiosk/customer/checkout/later`, title: 'Pay later', desc: 'Order now — pay at counter' },
+        { id: 'kiosk-success', route: `/${SLUG}/kiosk/customer/checkout/success`, title: 'Success', desc: 'Thank you — auto-return to catalog' },
+        { id: 'kiosk-cancel', route: `/${SLUG}/kiosk/customer/checkout/cancel`, title: 'Cancelled', desc: 'Payment failed or abandoned' },
+      ],
+    },
+    kasse: {
+      label: 'Staff kasse',
+      device: 'iPad landscape — bookmark /kasse/{slug} per register',
+      notes: 'PIN (pinkode) identifies employee. URL identifies kasse. Both stored on every sale.',
+      pages: [
+        { id: 'kasse-pin', route: `/${SLUG}/kasse/front`, title: 'PIN login', desc: 'Employee pinkode before register opens' },
+        { id: 'kasse-register', route: `/${SLUG}/kasse/front`, title: 'Register', desc: '/kasse/front — after PIN session' },
+        { id: 'kasse-terrace', route: `/${SLUG}/kasse/terrace`, title: 'Terrace', desc: '/kasse/terrace — different link + menu' },
+        { id: 'kasse-popup', route: `/${SLUG}/kasse/popup`, title: 'Pop-up (no terminal)', desc: 'QR only — no cash, no Charge card' },
+        { id: 'kasse-qr', route: `/${SLUG}/kasse/popup/pay/qr`, title: 'Pay with QR', desc: 'Customer scans Quickpay QR on screen' },
+        { id: 'kasse-receipt', route: `/${SLUG}/kasse/front/orders/:orderId`, title: 'Receipt', desc: 'Shows kasse + employee' },
+      ],
+    },
+  };
+
+  const SITE_FLOWS = {
+    platform: 'Merchants list → Create → Copy invite link → Merchant opens /invite → Setup',
+    admin: 'Products + Categories → Kasser (type: Self-service or Register) → Staff (PIN) → Setup → Orders',
+    kiosk: 'Phone (if SMS/Later) → Catalog → Cart → Pick method → QR / SMS / Later → Success → Catalog',
+    kasse: 'PIN → Register → Charge (Verifone) or QR → Receipt → Register',
+  };
+
+  const PAGE_FEATURES = {
+    'platform-merchants': {
+      auth: 'platform_admin',
+      features: ['Paginated merchant table', 'Search + status filters', 'Open detail', 'Create merchant'],
+      enter: ['Login'],
+      exit: [{ label: 'Create merchant', goto: 'platform/platform-new' }, { label: 'Merchant detail', goto: 'platform/platform-detail' }],
+      api: ['GET /api/v1/platform/merchants'],
+    },
+    'platform-new': {
+      auth: 'platform_admin',
+      features: ['Shop name + slug', 'Optional contact email (notes)', 'No auto-email'],
+      enter: ['Merchant list'],
+      exit: [{ label: 'Invite link ready', goto: 'platform/platform-invite' }],
+      api: ['POST /api/v1/platform/merchants'],
+    },
+    'platform-invite': {
+      auth: 'platform_admin',
+      features: ['Copyable /invite/{token} URL', '7-day expiry, single use', 'RNS sends link manually'],
+      enter: ['Create merchant'],
+      exit: [{ label: 'Merchant detail', goto: 'platform/platform-detail' }, { label: 'Create another', goto: 'platform/platform-new' }],
+      api: ['Creates TenantInvite row'],
+    },
+    'platform-detail': {
+      auth: 'platform_admin',
+      features: ['Update merchant (PATCH name, contact)', 'Write-only Quickpay setup', 'Ping status', 'Support notes', 'GDPR: Export data ZIP', 'Archive merchant', 'Request erasure (purge PII)', 'Shop preview'],
+      enter: ['Merchant list'],
+      exit: [{ label: 'Shop preview', goto: 'kiosk/kiosk-catalog' }],
+      api: ['GET/PATCH platform/merchants/:id', 'PUT quickpay', 'GET .../export-data', 'POST .../archive', 'POST .../request-erasure', 'POST notes'],
+    },
+    'admin-products': {
+      auth: 'admin',
+      features: ['Paginated list', 'Thumbnail column', 'Category + iPad visibility', 'Add product'],
+      enter: ['Sidebar', 'Login'],
+      exit: [{ label: 'Add product', goto: 'admin/admin-product-new' }, { label: 'Edit', goto: 'admin/admin-product-edit' }],
+      api: ['GET /api/v1/products'],
+    },
+    'admin-product-new': {
+      auth: 'admin',
+      features: ['Name, price, category dropdown', 'Image upload (saved on server)', 'Preview after select', 'Visible on all kasser (default)'],
+      enter: ['Product list'],
+      exit: [{ label: 'Save → list', goto: 'admin/admin-products' }],
+      api: ['POST /api/v1/products (multipart)', 'POST ProductKasse'],
+    },
+    'admin-product-edit': {
+      auth: 'admin',
+      features: ['Save (PATCH): name, price, category, active', 'Replace/remove image', 'Per-kasse visibility', 'Deactivate product'],
+      enter: ['Product list'],
+      exit: [{ label: 'Save → list', goto: 'admin/admin-products' }],
+      api: ['PATCH /api/v1/products/:id', 'DELETE .../products/:id/image'],
+    },
+    'admin-categories': {
+      auth: 'admin',
+      features: ['List with sort order + product count', 'Drives iPad category chips'],
+      enter: ['Sidebar'],
+      exit: [{ label: 'Add', goto: 'admin/admin-category-new' }, { label: 'Edit', goto: 'admin/admin-category-edit' }],
+      api: ['GET /api/v1/categories'],
+    },
+    'admin-category-new': { auth: 'admin', features: ['Name', 'Sort order'], enter: ['Category list'], exit: [{ label: 'Save', goto: 'admin/admin-categories' }], api: ['POST /api/v1/categories'] },
+    'admin-category-edit': { auth: 'admin', features: ['Save (PATCH): name, sort order, active', 'Deactivate', 'Delete if 0 products'], enter: ['Category list'], exit: [{ label: 'Save', goto: 'admin/admin-categories' }], api: ['PATCH /api/v1/categories/:id', 'DELETE /api/v1/categories/:id'] },
+    'admin-kasser': {
+      auth: 'admin',
+      features: ['One list for all iPads', 'Type column: Self-service or Register', 'Copy link per row', 'Add kasse'],
+      enter: ['Sidebar'],
+      exit: [{ label: 'Add', goto: 'admin/admin-kasse-new' }, { label: 'Edit register', goto: 'admin/admin-kasse-edit' }, { label: 'Edit self-service', goto: 'admin/admin-kiosk-edit' }],
+      api: ['GET /api/v1/kasser'],
+    },
+    'admin-kasse-new': {
+      auth: 'admin',
+      features: ['Type (required): Self-service or Register', 'Name + link slug', 'URL preview (/kiosk/ or /kasse/)', 'POI only for Register'],
+      enter: ['Kasser list'],
+      exit: [{ label: 'Save → edit', goto: 'admin/admin-kasse-edit' }],
+      api: ['POST /api/v1/kasser { type: kiosk|register }'],
+    },
+    'admin-kasse-edit': {
+      auth: 'admin',
+      features: ['Save (PATCH): name, slug, type, POI, active', 'Copy /kasse/{slug} URL', 'Product checklist (PUT)', 'Deactivate kasse'],
+      enter: ['Kasser list'],
+      exit: [{ label: 'PIN preview', goto: 'kasse/kasse-pin' }, { label: 'Back', goto: 'admin/admin-kasser' }],
+      api: ['PATCH /api/v1/kasser/:id', 'PUT /api/v1/kasser/:id/products'],
+    },
+    'admin-kiosk-edit': {
+      auth: 'admin',
+      features: ['Save (PATCH): name, slug, payment toggles, active', 'Copy /kiosk/{slug} URL', 'Product checklist (PUT)', 'Deactivate kasse'],
+      enter: ['Kasser list'],
+      exit: [{ label: 'Kiosk preview', goto: 'kiosk/kiosk-phone' }],
+      api: ['PATCH /api/v1/kasser/:id', 'PUT /api/v1/kasser/:id/products'],
+    },
+    'admin-kasse-terrace': { auth: 'admin', features: ['Example: terrace subset', 'Preview kasse iPad'], enter: ['Kasser list'], exit: [{ label: 'Kasse preview', goto: 'kasse/kasse-terrace' }], api: [] },
+    'admin-staff': {
+      auth: 'admin',
+      features: ['Floor staff list', 'PIN for kasse only (not admin login)'],
+      enter: ['Sidebar'],
+      exit: [{ label: 'Add', goto: 'admin/admin-staff-new' }, { label: 'Edit', goto: 'admin/admin-staff-edit' }],
+      api: ['GET /api/v1/staff'],
+    },
+    'admin-staff-new': { auth: 'admin', features: ['Display name', 'PIN 4–6 digits (shown once)'], enter: ['Staff list'], exit: [{ label: 'Save', goto: 'admin/admin-staff' }], api: ['POST /api/v1/staff'] },
+    'admin-staff-edit': { auth: 'admin', features: ['Save (PATCH): display name, new PIN', 'Deactivate (no hard delete)'], enter: ['Staff list'], exit: [{ label: 'Save', goto: 'admin/admin-staff' }], api: ['PATCH /api/v1/staff/:id'] },
+    'admin-orders': {
+      auth: 'admin',
+      features: ['Paginated orders', 'Filter: channel, kasse, employee'],
+      enter: ['Sidebar'],
+      exit: [{ label: 'Detail', goto: 'admin/admin-order-detail' }],
+      api: ['GET /api/v1/orders'],
+    },
+    'admin-order-detail': {
+      auth: 'admin',
+      features: ['Line items', 'kasseId + staffUserId + payment rail'],
+      enter: ['Orders list'],
+      exit: [{ label: 'Back', goto: 'admin/admin-orders' }],
+      api: ['GET /api/v1/orders/:id'],
+    },
+    'admin-setup': {
+      auth: 'admin',
+      features: ['Update Quickpay keys (PUT)', 'Update Verifone credentials (PUT)', 'Connection status badges', 'Setup guide links'],
+      enter: ['Sidebar', 'Invite accept', 'Register'],
+      exit: [{ label: 'Kasser (POI IDs)', goto: 'admin/admin-kasser' }],
+      api: ['GET /api/v1/setup', 'PUT /api/v1/setup/quickpay', 'PUT /api/v1/setup/verifone'],
+    },
+    'kiosk-phone': {
+      auth: 'none (public)',
+      features: ['Phone number pad', 'Start køb', 'Shown when SMS or Pay later enabled', 'Skipped if QR-only'],
+      enter: ['iPad bookmark when SMS/Later on'],
+      exit: [{ label: 'Start køb', goto: 'kiosk/kiosk-catalog' }],
+      api: ['GET catalog includes paymentMethods'],
+      stores: ['customerPhone in session'],
+    },
+    'kiosk-catalog': {
+      auth: 'none (public)',
+      features: ['Products for this kiosk kasse', 'Category chips', 'Product images on tiles', 'Cart badge', '3rem touch tiles'],
+      enter: ['iPad bookmark (QR-only)', 'Phone → Start køb', 'Success auto-return'],
+      exit: [{ label: 'Cart', goto: 'kiosk/kiosk-cart' }],
+      api: ['GET /api/v1/kiosk/:kasseSlug/catalog'],
+      stores: ['kasseId on order at checkout'],
+    },
+    'kiosk-cart': {
+      auth: 'none',
+      features: ['Line items', 'Update qty (+/−)', 'Remove line (×)', 'Clear cart', 'Total'],
+      enter: ['Catalog'],
+      exit: [{ label: 'Checkout', goto: 'kiosk/kiosk-checkout' }, { label: 'Menu', goto: 'kiosk/kiosk-catalog' }],
+      api: ['Client cart; validated server-side on checkout'],
+    },
+    'kiosk-checkout': {
+      auth: 'none',
+      features: ['Total', 'Large buttons: QR / SMS / Pay later (enabled only)', 'Phone required for SMS/Later if missing'],
+      enter: ['Cart'],
+      exit: [{ label: 'QR', goto: 'kiosk/kiosk-pay-qr' }, { label: 'SMS', goto: 'kiosk/kiosk-pay-sms' }, { label: 'Later', goto: 'kiosk/kiosk-pay-later' }],
+      api: ['POST /api/v1/kiosk/:kasseSlug/checkout { paymentMethod }'],
+    },
+    'kiosk-pay-qr': {
+      auth: 'none',
+      features: ['Full-screen Quickpay QR', 'Poll/webhook', 'Cancel'],
+      enter: ['Checkout → QR'],
+      exit: [{ label: 'Paid', goto: 'kiosk/kiosk-success' }, { label: 'Cancel', goto: 'kiosk/kiosk-cancel' }],
+      api: ['POST .../checkout/qr'],
+    },
+    'kiosk-pay-sms': {
+      auth: 'none',
+      features: ['Confirm phone', 'Send SMS with payment link', 'Wait for webhook'],
+      enter: ['Checkout → SMS'],
+      exit: [{ label: 'Sent → success', goto: 'kiosk/kiosk-success' }, { label: 'Back', goto: 'kiosk/kiosk-checkout' }],
+      api: ['POST .../checkout/sms'],
+    },
+    'kiosk-pay-later': {
+      auth: 'none',
+      features: ['Confirm phone', 'Order pending_payment', 'Pay at counter message'],
+      enter: ['Checkout → Later'],
+      exit: [{ label: 'Order placed', goto: 'kiosk/kiosk-catalog' }],
+      api: ['POST .../checkout/later'],
+      stores: ['Order.customerPhone', 'status: pending_payment'],
+    },
+    'kiosk-success': { auth: 'none', features: ['Thank you', '10s countdown → catalog'], enter: ['Quickpay webhook (QR/SMS)'], exit: [{ label: 'Catalog', goto: 'kiosk/kiosk-catalog' }], api: [] },
+    'kiosk-cancel': { auth: 'none', features: ['Cart preserved', 'Retry'], enter: ['Quickpay cancel / QR timeout'], exit: [{ label: 'Retry', goto: 'kiosk/kiosk-checkout' }], api: [] },
+    'kasse-pin': {
+      auth: 'none → kasseSession JWT',
+      features: ['4-digit PIN pad', 'Rate limited', 'No sale without session'],
+      enter: ['iPad bookmark /kasse/{slug}'],
+      exit: [{ label: 'OK → register', goto: 'kasse/kasse-register' }],
+      api: ['POST /api/v1/kasse/:kasseSlug/pin'],
+    },
+    'kasse-register': {
+      auth: 'kasseSession',
+      features: ['Product grid with images (this kasse)', 'Cart: update qty, remove line, clear cart', 'Charge card (if POI)', 'Pay with QR', 'Log ud'],
+      enter: ['PIN OK'],
+      exit: [{ label: 'Receipt', goto: 'kasse/kasse-receipt' }, { label: 'QR', goto: 'kasse/kasse-qr' }, { label: 'Log ud', goto: 'kasse/kasse-pin' }],
+      api: ['GET catalog', 'POST sales'],
+      stores: ['kasseId + staffUserId on every order'],
+    },
+    'kasse-terrace': { auth: 'kasseSession', features: ['Example: narrower menu', 'Has terminal'], enter: ['PIN at /kasse/terrace'], exit: [{ label: 'Charge', goto: 'kasse/kasse-receipt' }], api: [] },
+    'kasse-popup': { auth: 'kasseSession', features: ['No terminal', 'QR only', 'No cash'], enter: ['PIN at /kasse/popup'], exit: [{ label: 'QR', goto: 'kasse/kasse-qr' }], api: [] },
+    'kasse-qr': {
+      auth: 'kasseSession',
+      features: ['Full-screen Quickpay QR', 'Wait for webhook', 'Cancel'],
+      enter: ['Register'],
+      exit: [{ label: 'Paid', goto: 'kasse/kasse-receipt' }, { label: 'Cancel', goto: 'kasse/kasse-popup' }],
+      api: ['POST /api/v1/kasse/:kasseSlug/pay/qr'],
+    },
+    'kasse-receipt': {
+      auth: 'kasseSession',
+      features: ['Approved total', 'Employee + kasse on order'],
+      enter: ['Charge or QR success'],
+      exit: [{ label: 'Next sale', goto: 'kasse/kasse-register' }],
+      api: [],
+    },
+  };
+
+  const ITERATION = {
+    'platform-merchants': 'v1: table + filters only. Dashboard widgets (counts by status) → v1.1.',
+    'platform-detail': 'GDPR: Export → Archive → Erasure. Anonymised orders kept ~5y (DK bookkeeping). Not a single wipe button.',
+    'platform-new': 'Creates tenant + slug. No email sent — RNS copies link and sends it themselves.',
+    'platform-invite': 'Invite URL e.g. /invite/{token} — merchant sets password when they open it.',
+    'admin-products': 'Category column links to merchant-defined categories — not free text.',
+    'admin-categories': 'Sort order controls chip sequence on kiosk/kasse. Empty categories hidden on iPad.',
+    'admin-category-new': 'Merchants create their own — no auto-seed. e.g. Drinks, Food, Merch.',
+    'admin-category-edit': 'Deactivate hides chip; products keep category until reassigned.',
+    'admin-product-new': 'Image = file upload (JPEG/PNG/WebP, max 2 MB). Server stores file; Product.imageKey in DB.',
+    'admin-product-edit': 'Replace/remove image deletes old file server-side. “Visible on” = same data as kasse edit.',
+    'admin-kasser': 'Type = Self-service (/kiosk/…) or Register (/kasse/…). One admin screen for both.',
+    'admin-kasse-new': 'Type is required. Self-service hides POI field. Slug unique per tenant.',
+    'admin-kasse-edit': 'Copy link + product checklist. Register links need PIN.',
+    'admin-staff': 'PIN-only floor staff — separate from admin email/password.',
+    'admin-staff-new': '4–6 digit PIN stored hashed. Shown once on create.',
+    'admin-staff-edit': 'Reset PIN without changing sales history.',
+    'admin-orders': 'Filter by kasse link slug and employee who made the sale.',
+    'admin-order-detail': 'Terminal: kasse + employee + poiId. Kiosk: kasse link only.',
+    'admin-setup': 'Tenant-level Verifone API keys. Per-terminal POI IDs live on Kasser.',
+    'kiosk-catalog': 'Only products linked to Customer kiosk kasse (e.g. no wine if unchecked).',
+    'kiosk-cart': 'Could merge into slide-over panel instead of separate page — try both.',
+    'kiosk-phone': 'Like pos.rns-apps.dk — phone before catalog when SMS or Later enabled.',
+    'kiosk-checkout': 'Only show methods enabled on this kasse. At least one must stay on in admin.',
+    'kiosk-pay-qr': 'Same Quickpay link as staff kasse QR — customer scans on own phone.',
+    'kiosk-pay-sms': 'SMS provider TBD (GatewayAPI / Twilio). Server sends Quickpay URL only.',
+    'kiosk-pay-later': 'No Quickpay at checkout. Staff collects payment later (v1.1: collect action).',
+    'kiosk-success': 'Countdown “Returning to menu in 10s…” then redirect.',
+    'kiosk-cancel': 'Big “Try again” → back to cart.',
+    'kasse-pin': 'Shared iPad — each employee enters PIN at shift start. Rate-limited.',
+    'kasse-register': 'Header: kasse name + employee. Log out → PIN screen.',
+    'kasse-terrace': 'Preview of per-kasse catalog — wine yes, croissant no.',
+    'kasse-popup': 'No Verifone POI — only Pay with QR. No cash button.',
+    'admin-kiosk-edit': 'Payment toggles: QR, SMS, Pay later. Phone gate when SMS or Later on.',
+    'kasse-qr': 'No cash. Staff shows QR — customer pays on phone. Same Quickpay as kiosk.',
+    'kasse-receipt': 'staffUserId on order — who rang up the sale.',
+  };
+
+  let currentSite = 'platform';
+  let currentPage = 'platform-merchants';
+
+  function nav(site, pageId) {
+    currentSite = site;
+    currentPage = pageId;
+    document.querySelectorAll('.site-tabs button').forEach((b) => {
+      b.classList.toggle('active', b.dataset.site === site);
+    });
+    render();
+  }
+
+  function renderSidebar() {
+    const site = SITES[currentSite];
+    const ul = site.pages.map((p) => `
+      <li>
+        <button type="button" class="${p.id === currentPage ? 'active' : ''}" data-page="${p.id}">
+          ${p.title}
+          <span class="route">${p.route}</span>
+        </button>
+      </li>
+    `).join('');
+    document.getElementById('sidebar').innerHTML = `
+      <h2>${site.label}</h2>
+      <span class="device-badge">${site.device}</span>
+      <ul class="page-list">${ul}</ul>
+      <div class="sidebar-notes">${site.notes}</div>
+      <div class="sidebar-notes sidebar-notes--flow"><strong>Site flow:</strong><br>${SITE_FLOWS[currentSite]}</div>
+    `;
+    document.getElementById('sidebar').querySelectorAll('[data-page]').forEach((btn) => {
+      btn.addEventListener('click', () => nav(currentSite, btn.dataset.page));
+    });
+  }
+
+  function renderTitle() {
+    const site = SITES[currentSite];
+    const page = site.pages.find((p) => p.id === currentPage);
+    const feat = PAGE_FEATURES[currentPage];
+    document.getElementById('page-title').innerHTML = `
+      <h3>${page.title}</h3>
+      <p><code>${page.route}</code> — ${page.desc}</p>
+    `;
+    if (feat) {
+      const exitHtml = (feat.exit || []).map((e) =>
+        `<span class="flow-chip">${e.label} → <button type="button" data-goto="${e.goto}">${e.goto.split('/').pop()}</button></span>`
+      ).join('');
+      document.getElementById('features-panel').innerHTML = `
+        <div class="features-meta">Auth: <code>${feat.auth}</code>${feat.api?.length ? ` · API: ${feat.api.map((a) => `<code>${a}</code>`).join(', ')}` : ''}${feat.stores ? ` · Stores: <code>${feat.stores}</code>` : ''}</div>
+        <div class="features-grid">
+          <section><h4>Features (v1)</h4><ul>${feat.features.map((f) => `<li>${f}</li>`).join('')}</ul></section>
+          <section><h4>Enter from</h4><ul>${feat.enter.map((f) => `<li>${f}</li>`).join('')}</ul></section>
+        </div>
+        <h4>Exit to</h4>
+        <div class="flow-row">${exitHtml || '<span class="wf-hint">—</span>'}</div>
+        <p class="wf-hint wf-stack-top">Full reference: <code>docs/design/page-features-and-flows.md</code></p>
+      `;
+      wire(document.getElementById('features-panel'));
+    } else {
+      document.getElementById('features-panel').innerHTML = '';
+    }
+    document.getElementById('iteration-notes').innerHTML = ITERATION[currentPage]
+      ? `<strong>Open question:</strong> ${ITERATION[currentPage]}`
+      : '';
+  }
+
+  function wire(el) {
+    el.querySelectorAll('[data-goto]').forEach((node) => {
+      node.addEventListener('click', (e) => {
+        e.preventDefault();
+        const [site, page] = node.dataset.goto.split('/');
+        nav(site, page);
+      });
+    });
+  }
+
+  function frameDesktop(html) {
+    return `<div class="frame-desktop"><div class="screen">${html}</div></div>`;
+  }
+
+  function frameIpad(html) {
+    return `<div class="frame-ipad"><div class="screen">${html}</div></div>`;
+  }
+
+  function pinPadHtml(okGoto) {
+    const keys = [1,2,3,4,5,6,7,8,9,'C',0,'⌫'];
+    return `
+      <div class="wf-pin-display" aria-hidden="true">••••</div>
+      <div class="wf-pinpad" role="group" aria-label="PIN keypad">
+        ${keys.map((k) => `<button type="button">${k}</button>`).join('')}
+        <button type="button" class="wf-btn kasse wide" data-goto="${okGoto}">OK</button>
+      </div>`;
+  }
+
+  function phonePadHtml(okGoto, display = '12 34 56 78') {
+    const keys = [1,2,3,4,5,6,7,8,9,'C',0,'⌫'];
+    return `
+      <div class="wf-pin-display" aria-hidden="true">${display}</div>
+      <div class="wf-pinpad" role="group" aria-label="Phone keypad">
+        ${keys.map((k) => `<button type="button">${k}</button>`).join('')}
+        <button type="button" class="wf-btn kiosk wide" data-goto="${okGoto}">Start køb</button>
+      </div>`;
+  }
+
+  function productTilesHtml(items, opts = {}) {
+    const { compact = false, goto = '' } = opts;
+    return items.map((p) => {
+      const [n, pr] = p.split('|');
+      const cls = compact ? 'wf-tile compact' : 'wf-tile';
+      const go = goto ? ` data-goto="${goto}"` : '';
+      const img = compact ? '' : '<div class="img"></div>';
+      return `<div class="${cls}"${go}>${img}<div class="name">${compact ? n : n}</div><div class="price">${pr} kr</div></div>`;
+    }).join('');
+  }
+
+  function cartLineHtml(name, qty, price) {
+    return `<div class="wf-cart-line">
+      <span>${name}</span>
+      <div class="wf-qty">
+        <button type="button" aria-label="Decrease">−</button>
+        <span>${qty}</span>
+        <button type="button" aria-label="Increase">+</button>
+        <button type="button" class="wf-btn ghost" aria-label="Remove line">×</button>
+      </div>
+      <span>${price} kr</span>
+    </div>`;
+  }
+
+  const WIREFRAMES = {
+    'platform-merchants': () => frameDesktop(`
+      <div class="wf-topbar">
+        <span class="brand">RNS platform</span>
+        <span class="actions">
+          <button type="button" class="wf-btn" data-goto="platform/platform-new">+ New merchant</button>
+          <button type="button" class="wf-btn">Logout</button>
+        </span>
+      </div>
+      <div class="wf-content">
+        <p class="wf-muted-sm wf-filter-row">Merchants · 24 total</p>
+        <input type="search" class="wf-search" placeholder="Search name, slug, email…" />
+        <table class="wf-table">
+          <thead>
+            <tr><th>Shop</th><th>Status</th><th>Quickpay</th><th>Created</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Demo Coffee</strong><br><small>demo-shop</small></td>
+              <td><span class="wf-badge live">live</span></td>
+              <td>Connected</td>
+              <td>2026-05-01</td>
+              <td><button type="button" class="wf-btn" data-goto="platform/platform-detail">Open</button></td>
+            </tr>
+            <tr>
+              <td><strong>Nordic Bites</strong><br><small>nordic-bites</small></td>
+              <td><span class="wf-badge pending">quickpay_connected</span></td>
+              <td>Connected</td>
+              <td>2026-05-28</td>
+              <td><button type="button" class="wf-btn" data-goto="platform/platform-detail">Open</button></td>
+            </tr>
+            <tr>
+              <td><strong>Harbor Goods</strong><br><small>harbor-goods</small></td>
+              <td><span class="wf-badge attention">attention</span></td>
+              <td>Ping failed</td>
+              <td>2026-04-12</td>
+              <td><button type="button" class="wf-btn" data-goto="platform/platform-detail">Open</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="wf-muted-sm--spaced">Page 1 of 2 · 20 per page</p>
+      </div>
+    `),
+
+    'platform-detail': () => frameDesktop(`
+      <div class="wf-topbar">
+        <span class="brand"><button type="button" class="wf-btn" data-goto="platform/platform-merchants">← Merchants</button></span>
+        <span>Demo Coffee</span>
+      </div>
+      <div class="wf-content">
+        <p><span class="wf-badge live">live</span> · slug: demo-shop</p>
+        <h4 class="wf-section-title--spaced">Quick links</h4>
+        <p>
+          <button type="button" class="wf-btn" data-goto="kiosk/kiosk-catalog">Open shop</button>
+          <button type="button" class="wf-btn" data-goto="admin/admin-setup">Open setup</button>
+        </p>
+        <h4 class="wf-section-title--spaced">Quickpay setup (write-only)</h4>
+        <p class="wf-muted-inline">Keys configured: Yes · Connection: OK · last ping 2 min ago</p>
+        <div class="wf-form wf-stack-top">
+          <label>Merchant number <input placeholder="From Quickpay Manager" /></label>
+          <label>Private key <input type="password" placeholder="Never shown after save" /></label>
+          <label>Payment window key <input type="password" placeholder="Never shown after save" /></label>
+          <p><button type="button" class="wf-btn primary">Save and test</button> <button type="button" class="wf-btn">Re-test</button></p>
+        </div>
+        <h4 class="wf-section-title--spaced">Merchant details</h4>
+        <div class="wf-form">
+          <label>Shop name <input value="Demo Coffee" /></label>
+          <label>Contact email <input type="email" value="owner@demo.dk" /></label>
+          <p><button type="button" class="wf-btn primary">Save changes</button></p>
+        </div>
+        <h4 class="wf-section-title--spaced">Support notes (RNS only)</h4>
+        <ul style="font-size:.85rem;line-height:1.6;margin:0 0 .75rem;padding-left:1.25rem">
+          <li>2026-06-01 — Called about Quickpay keys <span class="wf-muted-inline">(append-only v1)</span></li>
+          <li>2026-05-28 — Onboarding started</li>
+        </ul>
+        <textarea rows="2" class="wf-input" placeholder="Add note…"></textarea>
+        <p class="wf-stack-top"><button type="button" class="wf-btn primary">Add note</button></p>
+        <p class="wf-muted-sm">Edit/delete notes → v1.1</p>
+        <h4 class="wf-section-title--spaced wf-danger-zone">Danger zone (GDPR)</h4>
+        <p class="wf-muted-sm">EU: export first, then archive, then erasure. Payment records anonymised — not deleted — until legal retention ends.</p>
+        <p class="wf-stack-top">
+          <button type="button" class="wf-btn">Export all data (ZIP)</button>
+          <button type="button" class="wf-btn danger">Archive merchant</button>
+        </p>
+        <p class="wf-stack-top">
+          <button type="button" class="wf-btn danger" disabled title="Archive first">Delete personal data (erasure)</button>
+        </p>
+        <p class="wf-muted-sm">Erasure removes products, staff, keys, notes, customer phones — keeps anonymised order totals for bookkeeping.</p>
+      </div>
+    `),
+
+    'platform-new': () => frameDesktop(`
+      <div class="wf-topbar">
+        <span class="brand"><button type="button" class="wf-btn" data-goto="platform/platform-merchants">← Merchants</button></span>
+        <span>Create merchant</span>
+      </div>
+      <div class="wf-content wf-form">
+        <label>Shop name <input value="New Shop ApS" /></label>
+        <label>Slug <input value="new-shop" /> <span class="wf-hint wf-hint--inline">→ payment.rns-apps.dk/new-shop</span></label>
+        <label>Contact email <span class="wf-hint wf-hint--inline">(optional, for your notes)</span>
+          <input type="email" value="owner@example.dk" placeholder="owner@example.dk" />
+        </label>
+        <p><button type="button" class="wf-btn primary" data-goto="platform/platform-invite">Create merchant</button></p>
+      </div>
+    `),
+
+    'platform-invite': () => frameDesktop(`
+      <div class="wf-topbar">
+        <span class="brand"><button type="button" class="wf-btn" data-goto="platform/platform-merchants">← Merchants</button></span>
+        <span>New Shop ApS · invite ready</span>
+      </div>
+      <div class="wf-content wf-form">
+        <p><span class="wf-badge live">Created</span> Slug: <strong>new-shop</strong></p>
+        <h4 class="wf-section-title--top">Invite link</h4>
+        <p class="wf-hint">Copy and send to the merchant (email, SMS, etc.). They open the link to set password and finish setup. We do not send email automatically.</p>
+        <div class="wf-link-row">
+          <input class="wf-input" readonly value="payment.rns-apps.dk/invite/k7m2p9xq4n" />
+          <button type="button" class="wf-btn primary">Copy link</button>
+        </div>
+        <p class="wf-hint">Expires in 7 days · single use</p>
+        <p class="wf-stack-top-lg">
+          <button type="button" class="wf-btn" data-goto="platform/platform-detail">Open merchant</button>
+          <button type="button" class="wf-btn" data-goto="platform/platform-new">Create another</button>
+        </p>
+      </div>
+    `),
+
+    'admin-products': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-products')}
+        <div class="wf-content">
+          <div class="wf-toolbar">
+            <span>Products</span>
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-product-new">+ Add product</button>
+          </div>
+          <table class="wf-table">
+            <thead><tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>On iPads</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><span class="wf-thumb" aria-hidden="true"></span></td><td>Latte</td><td>Drinks</td><td>49 kr</td><td>Kiosk, Front, Terrace</td><td><button type="button" class="wf-btn" data-goto="admin/admin-product-edit">Edit</button></td></tr>
+              <tr><td><span class="wf-thumb" aria-hidden="true"></span></td><td>Croissant</td><td>Food</td><td>29 kr</td><td>Kiosk, Front</td><td><button type="button" class="wf-btn" data-goto="admin/admin-product-edit">Edit</button></td></tr>
+              <tr><td><span class="wf-thumb empty" aria-hidden="true">—</span></td><td>Wine glass</td><td>Drinks</td><td>65 kr</td><td>Front, Terrace</td><td><button type="button" class="wf-btn" data-goto="admin/admin-product-edit">Edit</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `),
+
+    'admin-product-new': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-products')}
+        <div class="wf-content wf-form">
+          <h4 class="wf-section-title">Add product</h4>
+          <label>Name <input value="Cappuccino" /></label>
+          <label>Price (DKK) <input type="number" value="49" /></label>
+          <label>Category
+            <select class="wf-select">
+              <option>— None —</option>
+              <option selected>Drinks</option>
+              <option>Food</option>
+              <option>Merch</option>
+            </select>
+          </label>
+          <label>Product image
+            <input type="file" accept="image/jpeg,image/png,image/webp" class="wf-input" />
+            <span style="font-size:.8rem;color:var(--muted)">JPEG, PNG or WebP · max 2 MB · saved on server when you Save</span>
+          </label>
+          <div class="wf-image-preview" aria-label="Preview after upload">Preview appears here after file select</div>
+          <fieldset class="wf-fieldset">
+            <legend style="font-size:.85rem;font-weight:600">Visible on iPads</legend>
+            <label><input type="checkbox" checked /> Customer kiosk</label><br>
+            <label><input type="checkbox" checked /> Front counter</label><br>
+            <label><input type="checkbox" checked /> Terrace</label>
+            <p class="wf-muted-sm">Default: all kasser checked</p>
+          </fieldset>
+          <p>
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-products">Save</button>
+            <button type="button" class="wf-btn" data-goto="admin/admin-products">Cancel</button>
+          </p>
+        </div>
+      </div>
+    `),
+
+    'admin-categories': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-categories')}
+        <div class="wf-content">
+          <div class="wf-toolbar">
+            <span>Categories</span>
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-category-new">+ Add category</button>
+          </div>
+          <table class="wf-table">
+            <thead><tr><th>Order</th><th>Name</th><th>Products</th><th>Active</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><strong>Drinks</strong></td><td>6</td><td>Yes</td><td><button type="button" class="wf-btn" data-goto="admin/admin-category-edit">Edit</button></td></tr>
+              <tr><td>2</td><td><strong>Food</strong></td><td>5</td><td>Yes</td><td><button type="button" class="wf-btn" data-goto="admin/admin-category-edit">Edit</button></td></tr>
+              <tr><td>3</td><td><strong>Merch</strong></td><td>2</td><td>Yes</td><td><button type="button" class="wf-btn" data-goto="admin/admin-category-edit">Edit</button></td></tr>
+              <tr><td>4</td><td><strong>Seasonal</strong></td><td>0</td><td>Yes</td><td><button type="button" class="wf-btn" data-goto="admin/admin-category-edit">Edit</button></td></tr>
+            </tbody>
+          </table>
+          <p class="wf-muted-sm--spaced">Chips on iPad: All + active categories with products on that kasse. Seasonal hidden until it has products.</p>
+        </div>
+      </div>
+    `),
+
+    'admin-category-new': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-categories')}
+        <div class="wf-content wf-form">
+          <h4 class="wf-section-title">Add category</h4>
+          <label>Name <input value="Seasonal" /></label>
+          <label>Sort order <input type="number" value="4" /> <span style="font-size:.8rem;color:var(--muted)">lower = further left on iPad chips</span></label>
+          <p>
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-categories">Save</button>
+            <button type="button" class="wf-btn" data-goto="admin/admin-categories">Cancel</button>
+          </p>
+        </div>
+      </div>
+    `),
+
+    'admin-category-edit': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-categories')}
+        <div class="wf-content wf-form">
+          <h4 class="wf-section-title">Edit — Drinks</h4>
+          <label>Name <input value="Drinks" /></label>
+          <label>Sort order <input type="number" value="1" /></label>
+          <label><input type="checkbox" checked /> Active (show chip when products exist)</label>
+          <p style="font-size:.85rem;color:var(--muted)">6 products in this category · <button type="button" class="wf-btn" data-goto="admin/admin-products">View products</button></p>
+          <p>
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-categories">Save</button>
+            <button type="button" class="wf-btn danger">Deactivate</button>
+            <button type="button" class="wf-btn danger ghost" disabled title="6 products — deactivate instead">Delete category</button>
+          </p>
+          <p class="wf-muted-sm">Hard delete only when 0 products — use Seasonal (empty) to delete.</p>
+        </div>
+      </div>
+    `),
+
+    'admin-product-edit': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-products')}
+        <div class="wf-content wf-form">
+          <h4 class="wf-section-title">Edit — Latte</h4>
+          <label>Name <input value="Latte" /></label>
+          <label>Price (DKK) <input type="number" value="49" /></label>
+          <label>Category
+            <select class="wf-select">
+              <option>— None —</option>
+              <option selected>Drinks</option>
+              <option>Food</option>
+              <option>Merch</option>
+            </select>
+          </label>
+          <label>Product image</label>
+          <div class="wf-image-preview has-image" aria-label="Current product image">Current image (latte.jpg)</div>
+          <p class="wf-stack-top">
+            <button type="button" class="wf-btn">Replace image</button>
+            <button type="button" class="wf-btn">Remove image</button>
+          </p>
+          <label><input type="checkbox" checked /> Active (master catalog)</label>
+          <fieldset class="wf-fieldset">
+            <legend style="font-size:.85rem;font-weight:600">Visible on iPads</legend>
+            <label><input type="checkbox" checked /> Customer kiosk</label><br>
+            <label><input type="checkbox" checked /> Front counter</label><br>
+            <label><input type="checkbox" /> Terrace</label>
+          </fieldset>
+          <p>
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-products">Save</button>
+            <button type="button" class="wf-btn danger">Deactivate</button>
+          </p>
+        </div>
+      </div>
+    `),
+
+    'admin-kasser': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-kasser')}
+        <div class="wf-content">
+          <div class="wf-toolbar">
+            <span>Kasser &amp; iPads</span>
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-kasse-new">+ Add kasse</button>
+          </div>
+          <table class="wf-table">
+            <thead><tr><th>Name</th><th>Type</th><th>Link</th><th>Terminal</th><th>Active</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Customer kiosk</strong></td>
+                <td>Self-service</td>
+                <td><code>/${SLUG}/kiosk/customer</code> <button type="button" class="wf-btn">Copy</button></td>
+                <td>—</td>
+                <td>Yes</td>
+                <td><button type="button" class="wf-btn" data-goto="admin/admin-kiosk-edit">Edit</button></td>
+              </tr>
+              <tr>
+                <td><strong>Front counter</strong></td>
+                <td>Register</td>
+                <td><code>/${SLUG}/kasse/front</code> <button type="button" class="wf-btn">Copy</button></td>
+                <td>VF-001</td>
+                <td>Yes</td>
+                <td><button type="button" class="wf-btn" data-goto="admin/admin-kasse-edit">Edit</button></td>
+              </tr>
+              <tr>
+                <td><strong>Terrace</strong></td>
+                <td>Register</td>
+                <td><code>/${SLUG}/kasse/terrace</code> <button type="button" class="wf-btn">Copy</button></td>
+                <td>VF-002</td>
+                <td>Yes</td>
+                <td><button type="button" class="wf-btn" data-goto="admin/admin-kasse-terrace">Edit</button></td>
+              </tr>
+              <tr>
+                <td><strong>Pop-up</strong></td>
+                <td>Register</td>
+                <td><code>/${SLUG}/kasse/popup</code> <button type="button" class="wf-btn">Copy</button></td>
+                <td><em>QR only</em></td>
+                <td>Yes</td>
+                <td><button type="button" class="wf-btn" data-goto="kasse/kasse-popup">Preview</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="wf-muted-sm--spaced">Choose type when adding: <strong>Self-service</strong> (customer iPad, /kiosk/…) or <strong>Register</strong> (staff iPad + PIN, /kasse/…).</p>
+        </div>
+      </div>
+    `),
+
+    'admin-kasse-new': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-kasser')}
+        <div class="wf-content wf-form">
+          <h4 class="wf-section-title">Add kasse</h4>
+          <label>Type <span style="color:var(--muted);font-weight:400">(required)</span>
+            <select class="wf-select">
+              <option selected>Register — staff iPad, employee PIN, /kasse/{slug}</option>
+              <option>Self-service — customer iPad, no PIN, /kiosk/{slug}</option>
+            </select>
+          </label>
+          <label>Name <input value="Terrace" /></label>
+          <label>Link slug <input value="terrace" /></label>
+          <p class="wf-muted-sm">Preview: <code>/${SLUG}/kasse/terrace</code> (changes to <code>/kiosk/…</code> if Self-service)</p>
+          <label>Verifone POI ID (register only) <input placeholder="e.g. VF-002" /></label>
+          <p>
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-kasse-edit">Save</button>
+            <button type="button" class="wf-btn" data-goto="admin/admin-kasser">Cancel</button>
+          </p>
+        </div>
+      </div>
+    `),
+
+    'admin-kasse-edit': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-kasser')}
+        <div class="wf-content wf-form">
+          <h4 class="wf-section-title">Edit — Front counter</h4>
+          <label>Type
+            <select class="wf-select">
+              <option selected>Register — staff iPad, employee PIN</option>
+              <option>Self-service — customer iPad, no PIN</option>
+            </select>
+          </label>
+          <label>Name <input value="Front counter" /></label>
+          <label>Link slug <input value="front" /></label>
+          <label>iPad link <input class="wf-input" readonly value="payment.rns-apps.dk/${SLUG}/kasse/front" /> <button type="button" class="wf-btn">Copy</button></label>
+          <label>Verifone POI ID (register only) <input value="VF-001" /></label>
+          <label><input type="checkbox" checked /> Active</label>
+          <p style="font-size:.85rem;color:var(--muted)">Staff open link → enter PIN → <button type="button" class="wf-btn" data-goto="kasse/kasse-pin">Preview PIN screen</button></p>
+          <h4 class="wf-section-title--top">Products on this iPad</h4>
+          <p class="wf-muted-sm">14 of 15 products visible</p>
+          <label><input type="checkbox" checked /> Latte</label><br>
+          <label><input type="checkbox" checked /> Croissant</label><br>
+          <label><input type="checkbox" checked /> Wine glass</label><br>
+          <label><input type="checkbox" /> Merch tote (kiosk only)</label>
+          <p class="wf-stack-top">
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-kasser">Save</button>
+            <button type="button" class="wf-btn danger">Deactivate kasse</button>
+          </p>
+          <p class="wf-muted-sm">Deactivated link stops serving — reactivate from edit.</p>
+        </div>
+      </div>
+    `),
+
+    'admin-kiosk-edit': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-kasser')}
+        <div class="wf-content wf-form">
+          <h4 class="wf-section-title">Edit — Customer kiosk</h4>
+          <label>Type
+            <select class="wf-select">
+              <option>Register — staff iPad, employee PIN</option>
+              <option selected>Self-service — customer iPad, no PIN</option>
+            </select>
+          </label>
+          <label>Name <input value="Customer kiosk" /></label>
+          <label>Link slug <input value="customer" /></label>
+          <label>iPad link <input class="wf-input" readonly value="payment.rns-apps.dk/${SLUG}/kiosk/customer" /> <button type="button" class="wf-btn">Copy</button></label>
+          <p class="wf-muted-sm wf-stack-top">Self-service — no PIN. Customer picks enabled payment method at checkout.</p>
+          <h4 class="wf-section-title--spaced">Customer payment methods</h4>
+          <p class="wf-muted-sm">At least one must stay enabled (like <a href="https://pos.rns-apps.dk/" target="_blank" rel="noopener">pos.rns-apps.dk</a>).</p>
+          <label><input type="checkbox" checked /> Pay with QR — Quickpay link on screen</label><br>
+          <label><input type="checkbox" checked /> Pay with SMS — send payment link to phone</label><br>
+          <label><input type="checkbox" checked /> Pay later — order now, pay at counter (requires phone)</label><br>
+          <p class="wf-muted-sm wf-stack-top">SMS or Pay later → customer enters phone before catalog.</p>
+          <h4 class="wf-section-title--spaced">Products on customer iPad</h4>
+          <label><input type="checkbox" checked /> Latte</label><br>
+          <label><input type="checkbox" checked /> Croissant</label><br>
+          <label><input type="checkbox" /> Wine glass (staff only)</label><br>
+          <label><input type="checkbox" checked /> Merch tote</label>
+          <p class="wf-stack-top">
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-kasser">Save</button>
+            <button type="button" class="wf-btn danger">Deactivate kasse</button>
+          </p>
+        </div>
+      </div>
+    `),
+
+    'admin-kasse-terrace': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-kasser')}
+        <div class="wf-content wf-form">
+          <h4 class="wf-section-title">Edit — Terrace</h4>
+          <label>Name <input value="Terrace" /></label>
+          <label>Link slug <input value="terrace" /></label>
+          <label>iPad link <input class="wf-input" readonly value="payment.rns-apps.dk/${SLUG}/kasse/terrace" /></label>
+          <label>Verifone POI ID <input value="VF-002" /></label>
+          <h4 class="wf-section-title--top">Products on this iPad</h4>
+          <label><input type="checkbox" checked /> Latte</label><br>
+          <label><input type="checkbox" /> Croissant</label><br>
+          <label><input type="checkbox" checked /> Wine glass</label>
+          <label><input type="checkbox" checked /> Active</label>
+          <p class="wf-muted-sm wf-stack-top">Terrace kasse wireframe shows this subset</p>
+          <p class="wf-stack-top">
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-kasser">Save</button>
+            <button type="button" class="wf-btn" data-goto="kasse/kasse-terrace">Preview on kasse iPad →</button>
+            <button type="button" class="wf-btn danger">Deactivate kasse</button>
+          </p>
+        </div>
+      </div>
+    `),
+
+    'admin-orders': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-orders')}
+        <div class="wf-content">
+          <p class="wf-filter-row">Filter: <button type="button" class="wf-chip active">All</button> <button type="button" class="wf-chip">Online</button> <button type="button" class="wf-chip">Terminal</button></p>
+          <p class="wf-filter-row">Kasse: <button type="button" class="wf-chip active">All</button> <button type="button" class="wf-chip">Front</button> <button type="button" class="wf-chip">Terrace</button></p>
+          <p class="wf-filter-row">Employee: <button type="button" class="wf-chip active">All</button> <button type="button" class="wf-chip">Maria</button> <button type="button" class="wf-chip">Jens</button></p>
+          <table class="wf-table">
+            <thead><tr><th>Time</th><th>Channel</th><th>Kasse</th><th>Employee</th><th>Total</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>14:32</td><td>Kiosk</td><td>customer</td><td>—</td><td>127 kr</td><td><button type="button" class="wf-btn" data-goto="admin/admin-order-detail-kiosk">View</button></td></tr>
+              <tr><td>14:18</td><td>Terminal</td><td>front</td><td>Maria</td><td>78 kr</td><td><button type="button" class="wf-btn" data-goto="admin/admin-order-detail">View</button></td></tr>
+              <tr><td>13:55</td><td>Terminal</td><td>terrace</td><td>Jens</td><td>156 kr</td><td><button type="button" class="wf-btn" data-goto="admin/admin-order-detail">View</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `),
+
+    'admin-order-detail': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-orders')}
+        <div class="wf-content">
+          <p><button type="button" class="wf-btn" data-goto="admin/admin-orders">← Orders</button></p>
+          <h4 class="wf-section-title">Order #d4e5f6 · 78 kr · captured</h4>
+          <p style="color:var(--muted);font-size:.85rem">Terminal · /kasse/front · <strong>Maria</strong> · VF-001 · 2026-06-08 14:18</p>
+          <p style="font-size:.8rem;color:var(--muted)">kasseId + staffUserId for analytics</p>
+          <table class="wf-table wf-stack-top">
+            <thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead>
+            <tbody>
+              <tr><td>Latte</td><td>2</td><td>98 kr</td></tr>
+              <tr><td>Croissant</td><td>1</td><td>29 kr</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `),
+
+    'admin-setup': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-setup')}
+        <div class="wf-content wf-setup-grid">
+          <div class="wf-form">
+            <h4>Quickpay (kiosk / online)</h4>
+            <p><span class="wf-badge live">Connected</span></p>
+            <label>Merchant ID <input value="12345" /></label>
+            <label>Private key <input type="password" value="••••••" /></label>
+            <label>API key <input type="password" value="••••••" /></label>
+            <button type="button" class="wf-btn primary">Save</button>
+            <h4 class="wf-section-title--top">Verifone (tenant credentials)</h4>
+            <p><span class="wf-badge live">Connected</span></p>
+            <label>User UID <input value="merchant-uid" /></label>
+            <label>API key <input type="password" value="••••••" /></label>
+            <label>Sale ID <input value="sale-001" /></label>
+            <button type="button" class="wf-btn primary">Save</button>
+            <p class="wf-muted-sm wf-stack-top">Per-terminal POI IDs → <button type="button" class="wf-btn" data-goto="admin/admin-kasser">Kasser</button></p>
+          </div>
+          <div>
+            <h4>Setup guides</h4>
+            <ul style="font-size:.85rem;line-height:1.8">
+              <li>01 — Quickpay account</li>
+              <li>02 — Merchant keys</li>
+              <li>03 — Acquirer setup (in Quickpay Manager)</li>
+              <li>04 — Webhooks (automatic)</li>
+            </ul>
+            <p style="font-size:.85rem">Copy links from <button type="button" class="wf-btn" data-goto="admin/admin-kasser">Kasser</button></p>
+            <p style="font-size:.85rem">Staff PINs from <button type="button" class="wf-btn" data-goto="admin/admin-staff">Staff</button></p>
+          </div>
+        </div>
+      </div>
+    `),
+
+    'admin-staff': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-staff')}
+        <div class="wf-content">
+          <div class="wf-toolbar">
+            <span>Staff (kasse PIN)</span>
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-staff-new">+ Add staff</button>
+          </div>
+          <table class="wf-table">
+            <thead><tr><th>Name</th><th>PIN</th><th>Active</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><strong>Maria</strong></td><td>••••</td><td>Yes</td><td><button type="button" class="wf-btn" data-goto="admin/admin-staff-edit">Edit</button></td></tr>
+              <tr><td><strong>Jens</strong></td><td>••••</td><td>Yes</td><td><button type="button" class="wf-btn" data-goto="admin/admin-staff-edit">Edit</button></td></tr>
+              <tr><td><strong>Sofia</strong></td><td>••••</td><td>No</td><td><button type="button" class="wf-btn" data-goto="admin/admin-staff-edit">Edit</button></td></tr>
+            </tbody>
+          </table>
+          <p class="wf-muted-sm--spaced">PIN used on /kasse/{slug} — not the same as admin login.</p>
+        </div>
+      </div>
+    `),
+
+    'admin-staff-new': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-staff')}
+        <div class="wf-content wf-form">
+          <h4 class="wf-section-title">Add staff</h4>
+          <label>Display name <input value="Maria" /></label>
+          <label>PIN (4–6 digits) <input type="password" value="1234" maxlength="6" /></label>
+          <p style="font-size:.8rem;color:var(--muted)">PIN shown once — store securely</p>
+          <p>
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-staff">Save</button>
+            <button type="button" class="wf-btn" data-goto="admin/admin-staff">Cancel</button>
+          </p>
+        </div>
+      </div>
+    `),
+
+    'admin-staff-edit': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-staff')}
+        <div class="wf-content wf-form">
+          <h4 class="wf-section-title">Edit — Maria</h4>
+          <label>Display name <input value="Maria" /></label>
+          <label>New PIN <input type="password" placeholder="Leave blank to keep" /></label>
+          <label><input type="checkbox" checked /> Active</label>
+          <p>
+            <button type="button" class="wf-btn primary" data-goto="admin/admin-staff">Save</button>
+            <button type="button" class="wf-btn danger">Deactivate</button>
+          </p>
+          <p class="wf-muted-sm">Staff cannot be hard-deleted — sales keep staffUserId.</p>
+        </div>
+      </div>
+    `),
+
+    'admin-order-detail-kiosk': () => frameDesktop(`
+      <div class="wf-body">
+        ${adminNav('admin-orders')}
+        <div class="wf-content">
+          <p><button type="button" class="wf-btn" data-goto="admin/admin-orders">← Orders</button></p>
+          <h4 class="wf-section-title">Order #a1b2c3 · 127 kr · captured</h4>
+          <p style="color:var(--muted);font-size:.85rem">Kiosk · /kiosk/customer · QR · +45 12 34 56 78 · Quickpay</p>
+        </div>
+      </div>
+    `),
+
+    'kasse-pin': () => frameIpad(`
+      <div class="wf-topbar">
+        <div>
+          <div class="brand">Front counter</div>
+          <div class="sub">/${SLUG}/kasse/front</div>
+        </div>
+      </div>
+      <div class="wf-content wf-success">
+        <h2>Indtast pinkode</h2>
+        <p class="wf-hint">Medarbejder-PIN · 4 cifre</p>
+        ${pinPadHtml('kasse/kasse-register')}
+      </div>
+    `),
+
+    'kiosk-phone': () => frameIpad(`
+      <div class="wf-topbar">
+        <div>
+          <div class="brand">Demo Coffee</div>
+          <div class="sub">Selvbetjening</div>
+        </div>
+      </div>
+      <div class="wf-content wf-success">
+        <h2>Indtast telefonnummer</h2>
+        <p class="wf-hint">Bruges til SMS-betaling eller betal senere</p>
+        ${phonePadHtml('kiosk/kiosk-catalog')}
+      </div>
+    `),
+
+    'kiosk-catalog': () => frameIpad(`
+      <div class="wf-topbar">
+        <div>
+          <div class="brand">Demo Coffee</div>
+          <div class="sub">Selvbetjening</div>
+        </div>
+        <button type="button" class="wf-btn kiosk" data-goto="kiosk/kiosk-cart">Kurv (3) · 127 kr</button>
+      </div>
+      <div class="wf-content">
+        <div class="wf-chips" role="tablist">
+          <button type="button" class="wf-chip active">Alle</button>
+          <button type="button" class="wf-chip">Drikke</button>
+          <button type="button" class="wf-chip">Mad</button>
+          <button type="button" class="wf-chip">Merch</button>
+        </div>
+        <div class="wf-grid">
+          ${productTilesHtml(['Latte|49','Croissant|29','Cappuccino|49','Sparkling water|25','Sandwich|79','Merch tote|149'], { goto: 'kiosk/kiosk-cart' })}
+        </div>
+      </div>
+      <div class="wf-footer-bar">
+        <span class="wf-hint wf-hint--inline">Tryk for at tilføje</span>
+        <button type="button" class="wf-btn kiosk" data-goto="kiosk/kiosk-cart">Se kurv · 127 kr</button>
+      </div>
+    `),
+
+    'kiosk-cart': () => frameIpad(`
+      <div class="wf-topbar">
+        <button type="button" class="wf-btn ghost" data-goto="kiosk/kiosk-catalog">← Menu</button>
+        <span class="brand">Din ordre</span>
+        <span></span>
+      </div>
+      <div class="wf-content">
+        ${cartLineHtml('Latte', 2, 98)}
+        ${cartLineHtml('Croissant', 1, 29)}
+        <div class="wf-cart-total">I alt: 127 kr</div>
+      </div>
+      <div class="wf-footer-bar">
+        <button type="button" class="wf-btn danger ghost">Tøm kurv</button>
+        <button type="button" class="wf-btn" data-goto="kiosk/kiosk-catalog">Tilføj mere</button>
+        <button type="button" class="wf-btn kiosk block" data-goto="kiosk/kiosk-checkout">Gå til betaling</button>
+      </div>
+    `),
+
+    'kiosk-checkout': () => frameIpad(`
+      <div class="wf-topbar"><span class="brand">Vælg betaling</span></div>
+      <div class="wf-content wf-success">
+        <h2>127 kr</h2>
+        <p class="wf-hint">3 varer · +45 12 34 56 78</p>
+        <button type="button" class="wf-btn kiosk block" data-goto="kiosk/kiosk-pay-qr">Betal med QR</button>
+        <button type="button" class="wf-btn kiosk block wf-stack-top" data-goto="kiosk/kiosk-pay-sms">Betal med SMS</button>
+        <button type="button" class="wf-btn kiosk block wf-stack-top" data-goto="kiosk/kiosk-pay-later">Betal senere</button>
+        <p class="wf-stack-top"><button type="button" class="wf-btn ghost" data-goto="kiosk/kiosk-cart">← Tilbage til kurv</button></p>
+      </div>
+    `),
+
+    'kiosk-pay-qr': () => frameIpad(`
+      <div class="wf-topbar">
+        <span class="brand">Scan og betal</span>
+        <button type="button" class="wf-btn ghost" data-goto="kiosk/kiosk-checkout">Annuller</button>
+      </div>
+      <div class="wf-content wf-success">
+        <h2>127 kr</h2>
+        <p class="wf-hint">Scan QR med din telefon · Quickpay</p>
+        <div class="wf-qr-box" role="img" aria-label="QR-kode til betaling"><span>QR</span></div>
+        <p class="wf-hint wf-stack-top">Venter på betaling…</p>
+        <button type="button" class="wf-btn kiosk" data-goto="kiosk/kiosk-success">Simuler betalt</button>
+      </div>
+    `),
+
+    'kiosk-pay-sms': () => frameIpad(`
+      <div class="wf-topbar"><span class="brand">Betal med SMS</span></div>
+      <div class="wf-content wf-success">
+        <h2>127 kr</h2>
+        <p class="wf-hint">Vi sender et betalingslink til:</p>
+        <p><strong>+45 12 34 56 78</strong></p>
+        <button type="button" class="wf-btn kiosk block wf-stack-top" data-goto="kiosk/kiosk-success">Send SMS og betal</button>
+        <p class="wf-stack-top"><button type="button" class="wf-btn ghost" data-goto="kiosk/kiosk-checkout">← Skift betaling</button></p>
+      </div>
+    `),
+
+    'kiosk-pay-later': () => frameIpad(`
+      <div class="wf-topbar"><span class="brand">Betal senere</span></div>
+      <div class="wf-content wf-success">
+        <h2>127 kr</h2>
+        <p class="wf-hint">Ordren oprettes uden betaling nu. Betal ved disken.</p>
+        <p>Telefon: <strong>+45 12 34 56 78</strong></p>
+        <button type="button" class="wf-btn kiosk block wf-stack-top" data-goto="kiosk/kiosk-catalog">Bekræft ordre</button>
+        <p class="wf-stack-top"><button type="button" class="wf-btn ghost" data-goto="kiosk/kiosk-checkout">← Skift betaling</button></p>
+      </div>
+    `),
+
+    'kiosk-success': () => frameIpad(`
+      <div class="wf-content wf-success">
+        <div class="wf-icon-ok" aria-hidden="true">✓</div>
+        <h2>Tak for dit køb!</h2>
+        <p>Ordre #a1b2c3</p>
+        <p class="wf-countdown">Tilbage til menu om 10 sek…</p>
+        <button type="button" class="wf-btn kiosk" data-goto="kiosk/kiosk-catalog">Til menu nu</button>
+      </div>
+    `),
+
+    'kiosk-cancel': () => frameIpad(`
+      <div class="wf-content wf-success">
+        <h2>Betaling ikke gennemført</h2>
+        <p class="wf-hint">Din kurv er gemt.</p>
+        <p class="wf-stack-top-lg wf-inline-gap wf-center">
+          <button type="button" class="wf-btn kiosk" data-goto="kiosk/kiosk-checkout">Prøv igen</button>
+          <button type="button" class="wf-btn" data-goto="kiosk/kiosk-catalog">Til menu</button>
+        </p>
+      </div>
+    `),
+
+    'kasse-register': () => frameIpad(`
+      <div class="wf-topbar">
+        <div>
+          <div class="brand">Front counter</div>
+          <div class="sub">VF-001</div>
+        </div>
+        <span class="actions">
+          <span class="wf-employee">Maria</span>
+          <button type="button" class="wf-btn" data-goto="kasse/kasse-pin">Log ud</button>
+        </span>
+      </div>
+      <div class="wf-split">
+        <div class="wf-split-left">
+          <input class="wf-search" type="search" placeholder="Søg produkter…" />
+          <div class="wf-chips">
+            <button type="button" class="wf-chip active">Alle</button>
+            <button type="button" class="wf-chip">Drikke</button>
+            <button type="button" class="wf-chip">Mad</button>
+          </div>
+          <div class="wf-grid">
+            ${productTilesHtml(['Latte|49','Croissant|29','Cappuccino|49','Sandwich|79'], { compact: true })}
+          </div>
+        </div>
+        <div class="wf-split-right">
+          <div class="wf-panel-sale">
+            <strong>Aktuelt salg</strong>
+            ${cartLineHtml('Latte', 1, 49)}
+            ${cartLineHtml('Croissant', 1, 29)}
+          </div>
+          <div class="wf-cart-total">I alt: 78 kr</div>
+          <button type="button" class="wf-btn kasse block" data-goto="kasse/kasse-receipt">Charge card</button>
+          <button type="button" class="wf-btn block" data-goto="kasse/kasse-qr">Pay with QR</button>
+          <button type="button" class="wf-btn danger block">Ryd kurv</button>
+          <p class="wf-hint wf-mt-auto">Terminal eller QR · ingen kontant</p>
+        </div>
+      </div>
+    `),
+
+    'kasse-popup': () => frameIpad(`
+      <div class="wf-topbar">
+        <div>
+          <div class="brand">Pop-up</div>
+          <div class="sub">QR only</div>
+        </div>
+        <span class="wf-employee">Jens</span>
+      </div>
+      <div class="wf-split">
+        <div class="wf-split-left">
+          <div class="wf-grid">
+            ${productTilesHtml(['Latte|49','Cookie|19'], { compact: true })}
+          </div>
+        </div>
+        <div class="wf-split-right">
+          <div class="wf-panel-sale">
+            <strong>Aktuelt salg</strong>
+            ${cartLineHtml('Latte', 1, 49)}
+          </div>
+          <div class="wf-cart-total">I alt: 49 kr</div>
+          <button type="button" class="wf-btn kasse block" data-goto="kasse/kasse-qr">Pay with QR</button>
+          <p class="wf-hint wf-mt-auto">Ingen terminal · ingen kontant</p>
+        </div>
+      </div>
+    `),
+
+    'kasse-qr': () => frameIpad(`
+      <div class="wf-topbar">
+        <button type="button" class="wf-btn ghost" data-goto="kasse/kasse-popup">← Annuller</button>
+        <span class="brand">Scan og betal · 49 kr</span>
+      </div>
+      <div class="wf-content wf-success">
+        <div class="wf-qr-box" role="img" aria-label="QR-kode til betaling"><span>QR</span></div>
+        <p>Kunden scanner med mobilen</p>
+        <div class="wf-waiting">Quickpay · venter på betaling…</div>
+        <p class="wf-stack-top-lg"><button type="button" class="wf-btn kasse" data-goto="kasse/kasse-receipt">Simuler betalt</button></p>
+      </div>
+    `),
+
+    'kasse-terrace': () => frameIpad(`
+      <div class="wf-topbar">
+        <span class="brand">Terrace · Demo Coffee</span>
+        <span style="font-size:.75rem;color:var(--muted)">VF-002</span>
+      </div>
+      <div class="wf-split">
+        <div class="wf-split-left">
+          <p class="wf-muted-sm">8 products on this iPad</p>
+          <div class="wf-grid">
+            ${['Latte|49','Wine glass|65','Cappuccino|49','Sandwich|79'].map((p) => {
+              const [n, pr] = p.split('|');
+              return `<div class="wf-tile"><div class="name">+ ${n}</div><div class="price">${pr} kr</div></div>`;
+            }).join('')}
+          </div>
+          <p class="wf-muted-xs wf-stack-top">Croissant not assigned to Terrace</p>
+        </div>
+        <div class="wf-split-right">
+          <strong>Current sale</strong>
+          <div class="wf-cart-line"><span>Wine glass × 1</span><span>65 kr</span></div>
+          <div class="wf-cart-total">Total: 65 kr</div>
+          <p class="wf-stack-top"><button type="button" class="wf-btn kasse block">Charge card</button></p>
+        </div>
+      </div>
+    `),
+
+    'kasse-receipt': () => frameIpad(`
+      <div class="wf-topbar">
+        <button type="button" class="wf-btn ghost" data-goto="kasse/kasse-register">← Nyt salg</button>
+        <span class="brand">Godkendt</span>
+      </div>
+      <div class="wf-content wf-success">
+        <div class="wf-icon-ok" style="background:var(--kasse-soft);color:var(--kasse)">✓</div>
+        <h2>78 kr betalt</h2>
+        <p>#d4e5f6 · Maria · Front counter</p>
+        <table class="wf-table wf-stack-top-lg wf-narrow-block">
+          <tr><td>Latte × 1</td><td>49 kr</td></tr>
+          <tr><td>Croissant × 1</td><td>29 kr</td></tr>
+        </table>
+        <button type="button" class="wf-btn kasse block wf-stack-top-lg wf-narrow-block" data-goto="kasse/kasse-register">Næste salg</button>
+      </div>
+    `),
+  };
+
+  function renderFrame() {
+    const wrap = document.getElementById('frame-wrap');
+    wrap.dataset.shell = currentSite;
+    const fn = WIREFRAMES[currentPage];
+    wrap.innerHTML = fn ? fn() : '<p class="wf-empty">Wireframe not found</p>';
+    wire(wrap);
+  }
+
+  function render() {
+    renderSidebar();
+    renderTitle();
+    renderFrame();
+  }
+
+  document.querySelectorAll('.site-tabs button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const site = btn.dataset.site;
+      const first = SITES[site].pages[0].id;
+      nav(site, first);
+    });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

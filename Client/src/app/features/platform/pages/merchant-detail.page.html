@@ -11,10 +11,6 @@
     <h2>{{ m.name }}</h2>
     <p>Status: {{ statusLabel(m.status) }}</p>
     <p>Shop link: payment.rns-apps.dk/{{ m.slug }}</p>
-    <p>
-      Merchant setup:
-      <a [routerLink]="['/', m.slug, 'admin', 'setup']">payment.rns-apps.dk/{{ m.slug }}/admin/setup</a>
-    </p>
     <p>Registered: {{ m.createdAt | date: 'medium' }}</p>
     <p>Orders: {{ m.orderCount }}@if (m.lastOrderAt) { — last order {{ m.lastOrderAt | date: 'medium' }}}</p>
   </section>
@@ -52,12 +48,15 @@
   </section>
 
   <section>
-    <h2>Quickpay</h2>
-    @if (m.quickpayMerchantId) {
-      <p>Merchant number: {{ m.quickpayMerchantId }}</p>
-    } @else {
-      <p>Not configured yet</p>
-    }
+    <h2>Quickpay setup</h2>
+    <p>
+      Keys configured:
+      @if (m.quickpayConfigured) {
+        Yes — values are not shown after save
+      } @else {
+        Not yet
+      }
+    </p>
     <p>
       Connection:
       @if (m.lastPingOk === true) {
@@ -71,30 +70,32 @@
     @if (m.lastPingAt) {
       <p>Last tested: {{ m.lastPingAt | date: 'medium' }}</p>
     }
-    @if (m.webhookUrl) {
-      <p>Webhook URL: {{ m.webhookUrl }}</p>
-    }
-    <p>
-      <button type="button" (click)="pingQuickpay()" [disabled]="pinging() || !m.quickpayMerchantId">
-        Test Quickpay connection
-      </button>
-    </p>
-  </section>
 
-  <section>
-    <h2>Clearhaus</h2>
-    <form (ngSubmit)="saveClearhaus()">
+    <form (ngSubmit)="saveQuickpay()">
+      <p>Enter keys from the merchant&apos;s Quickpay Manager. Saved secrets are never shown here.</p>
       <p>
         <label>
-          <input type="checkbox" name="clearhausConfirmed" [(ngModel)]="clearhausConfirmed" />
-          Merchant has completed Clearhaus setup
+          Merchant number
+          <input name="quickpayMerchantId" [(ngModel)]="quickpayMerchantId" required />
         </label>
       </p>
-      @if (m.clearhausConfirmedAt) {
-        <p>Confirmed: {{ m.clearhausConfirmedAt | date: 'medium' }}</p>
-      }
       <p>
-        <button type="submit" [disabled]="savingClearhaus()">Save Clearhaus status</button>
+        <label>
+          Private key
+          <input name="quickpayPrivateKey" type="password" [(ngModel)]="quickpayPrivateKey" autocomplete="off" />
+        </label>
+      </p>
+      <p>
+        <label>
+          Payment window key
+          <input name="quickpayApiKey" type="password" [(ngModel)]="quickpayApiKey" autocomplete="off" />
+        </label>
+      </p>
+      <p>
+        <button type="submit" [disabled]="savingQuickpay()">Save and test connection</button>
+        <button type="button" (click)="pingQuickpay()" [disabled]="pinging() || !m.quickpayConfigured">
+          Re-test connection
+        </button>
       </p>
     </form>
   </section>

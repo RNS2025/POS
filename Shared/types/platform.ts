@@ -9,7 +9,6 @@ export interface PaginatedResponse<T> {
 export type MerchantStatus =
   | 'registered'
   | 'quickpay_connected'
-  | 'clearhaus_pending'
   | 'live'
   | 'attention';
 
@@ -20,8 +19,8 @@ export interface PlatformMerchantSummary {
   status: MerchantStatus;
   createdAt: string;
   quickpayConnectedAt: string | null;
-  quickpayMerchantId: string | null;
-  clearhausConfirmedAt: string | null;
+  /** True when keys exist — platform never receives merchant id or secret values. */
+  quickpayConfigured: boolean;
   lastPingAt: string | null;
   lastPingOk: boolean | null;
   lastPingError: string | null;
@@ -46,7 +45,6 @@ export interface PlatformMerchantNote {
 
 export interface PlatformMerchantDetail extends PlatformMerchantSummary {
   updatedAt: string;
-  webhookUrl: string | null;
   users: PlatformMerchantUser[];
   notes: PlatformMerchantNote[];
   pendingInvite: PlatformPendingInvite | null;
@@ -96,10 +94,13 @@ export interface PlatformMerchantListQuery {
   status?: MerchantStatus;
 }
 
-export interface PatchPlatformMerchantRequest {
-  clearhausConfirmed?: boolean;
-}
-
 export interface CreatePlatformNoteRequest {
   body: string;
+}
+
+/** Platform write-only — saved keys are never returned. */
+export interface SavePlatformQuickpayRequest {
+  merchantId: string;
+  privateKey?: string;
+  apiKey?: string;
 }

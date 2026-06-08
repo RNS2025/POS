@@ -1,14 +1,12 @@
 export type MerchantStatus =
   | 'registered'
   | 'quickpay_connected'
-  | 'clearhaus_pending'
   | 'live'
   | 'attention';
 
 export const MERCHANT_STATUSES: MerchantStatus[] = [
   'registered',
   'quickpay_connected',
-  'clearhaus_pending',
   'live',
   'attention',
 ];

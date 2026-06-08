@@ -31,7 +31,7 @@ const verifoneSchema = z.object({
 const GUIDE_TITLES = [
   'Create a Quickpay account',
   'Create your shop in Quickpay and copy your keys',
-  'Apply for Clearhaus (you negotiate directly with them)',
+  'Set up your acquirer in Quickpay Manager',
   'Payment notifications (handled automatically by us)',
   'Test a payment and go live',
 ];
@@ -79,14 +79,32 @@ export class SetupService implements ISetupService {
   ) {}
 
   async getSetup(auth: JwtPayload, tenantSlug: string): Promise<SetupDto> {
-    const tenant = await this.requireTenantAccess(auth, tenantSlug);
+    const tenant = await this.requireMerchantAdmin(auth, tenantSlug);
     return this.toDto(tenant);
   }
 
   async saveQuickpay(auth: JwtPayload, tenantSlug: string, input: unknown): Promise<SetupDto> {
-    const tenant = await this.requireTenantAccess(auth, tenantSlug);
+    const tenant = await this.requireMerchantAdmin(auth, tenantSlug);
+    await this.persistQuickpay(tenant.id, input);
+    const updated = await this.tenants.findBySlug(tenant.slug);
+    if (!updated) {
+      throw new AppError('Your shop could not be loaded after saving. Refresh the page and try again.', 404);
+    }
+    return this.toDto(updated);
+  }
+
+  /** Platform-only entry point — write keys for a tenant; never returns secret values. */
+  async saveQuickpayForTenant(tenantId: string, input: unknown): Promise<void> {
+    const tenant = await this.tenants.findById(tenantId);
+    if (!tenant) {
+      throw new AppError(`No merchant found with id ${tenantId}.`, 404);
+    }
+    await this.persistQuickpay(tenantId, input);
+  }
+
+  private async persistQuickpay(tenantId: string, input: unknown): Promise<void> {
     const data = quickpaySchema.parse(input);
-    const existing = await this.quickpayConfigs.findByTenantId(tenant.id);
+    const existing = await this.quickpayConfigs.findByTenantId(tenantId);
 
     const privateKey =
       data.privateKey?.trim() || (existing ? decryptSecret(existing.privateKeyEnc) : '');
@@ -100,33 +118,26 @@ export class SetupService implements ISetupService {
     }
 
     await this.quickpayConfigs.upsert({
-      tenantId: tenant.id,
+      tenantId,
       merchantId: data.merchantId.trim(),
       privateKeyEnc: encryptSecret(privateKey),
       apiKeyEnc: encryptSecret(apiKey),
     });
 
-    const ping = await this.quickpay.ping(tenant.id);
+    const ping = await this.quickpay.ping(tenantId);
     const now = new Date();
 
-    await this.quickpayConfigs.updatePing(tenant.id, {
+    await this.quickpayConfigs.updatePing(tenantId, {
       lastPingAt: now,
       lastPingOk: ping.ok,
       lastPingError: ping.error ?? null,
     });
 
-    await this.tenants.updateQuickpayConnectedAt(tenant.id, ping.ok ? now : null);
-
-    const updated = await this.tenants.findBySlug(tenant.slug);
-    if (!updated) {
-      throw new AppError('Your shop could not be loaded after saving. Refresh the page and try again.', 404);
-    }
-
-    return this.toDto(updated);
+    await this.tenants.updateQuickpayConnectedAt(tenantId, ping.ok ? now : null);
   }
 
   async saveVerifone(auth: JwtPayload, tenantSlug: string, input: unknown): Promise<SetupDto> {
-    const tenant = await this.requireTenantAccess(auth, tenantSlug);
+    const tenant = await this.requireMerchantAdmin(auth, tenantSlug);
     const data = verifoneSchema.parse(input);
     const existing = await this.verifoneConfigs.findByTenantId(tenant.id);
 
@@ -165,17 +176,13 @@ export class SetupService implements ISetupService {
     return this.toDto(updated);
   }
 
-  private async requireTenantAccess(auth: JwtPayload, tenantSlug: string) {
+  private async requireMerchantAdmin(auth: JwtPayload, tenantSlug: string) {
     const tenant = await this.tenants.findBySlug(tenantSlug);
     if (!tenant) {
       throw new AppError(
         `We couldn't find a shop at "${tenantSlug}". Check the link or log in again.`,
         404,
       );
-    }
-
-    if (auth.role === 'platform_admin') {
-      return tenant;
     }
 
     if (auth.role !== 'admin' || auth.tenantId !== tenant.id || auth.tenantSlug !== tenant.slug) {

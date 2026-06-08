@@ -20,7 +20,6 @@ export function merchantActivity(tenant: {
 
 export function deriveMerchantStatus(tenant: {
   quickpayConnectedAt: Date | null;
-  clearhausConfirmedAt: Date | null;
   quickpayConfig: Pick<TenantQuickpayConfig, 'lastPingOk'> | null;
 }): MerchantStatus {
   const pingOk = tenant.quickpayConfig?.lastPingOk === true;
@@ -29,11 +28,8 @@ export function deriveMerchantStatus(tenant: {
   if (pingFailed) {
     return 'attention';
   }
-  if (tenant.clearhausConfirmedAt) {
-    return 'live';
-  }
   if (tenant.quickpayConnectedAt && pingOk) {
-    return 'clearhaus_pending';
+    return 'live';
   }
   if (tenant.quickpayConnectedAt) {
     return 'quickpay_connected';
@@ -41,23 +37,18 @@ export function deriveMerchantStatus(tenant: {
   return 'registered';
 }
 
-export function toMerchantSummary(
-  tenant: TenantWithRelations,
-  webhookUrl: string | null,
-): {
+export function toMerchantSummary(tenant: TenantWithRelations): {
   id: string;
   name: string;
   slug: string;
   status: MerchantStatus;
   createdAt: string;
   quickpayConnectedAt: string | null;
-  quickpayMerchantId: string | null;
-  clearhausConfirmedAt: string | null;
+  quickpayConfigured: boolean;
   lastPingAt: string | null;
   lastPingOk: boolean | null;
   lastPingError: string | null;
   primaryContactEmail: string | null;
-  webhookUrl: string | null;
   orderCount: number;
   lastOrderAt: string | null;
 } {
@@ -70,13 +61,11 @@ export function toMerchantSummary(
     status: deriveMerchantStatus(tenant),
     createdAt: tenant.createdAt.toISOString(),
     quickpayConnectedAt: tenant.quickpayConnectedAt?.toISOString() ?? null,
-    quickpayMerchantId: cfg?.merchantId ?? null,
-    clearhausConfirmedAt: tenant.clearhausConfirmedAt?.toISOString() ?? null,
+    quickpayConfigured: cfg !== null,
     lastPingAt: cfg?.lastPingAt?.toISOString() ?? null,
     lastPingOk: cfg?.lastPingOk ?? null,
     lastPingError: cfg?.lastPingError ?? null,
     primaryContactEmail: tenant.users[0]?.email ?? null,
-    webhookUrl,
     orderCount: activity.orderCount,
     lastOrderAt: activity.lastOrderAt,
   };
